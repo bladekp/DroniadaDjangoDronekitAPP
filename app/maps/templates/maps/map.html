@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <style>
+       #map {
+        height: 97vh;
+        width: 98vw;
+       }
+    </style>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.1.1/jquery.min.js"></script>
+  </head>
+  <body>
+    <div id="map"></div>
+    <script>
+       var m_rad = {{ marker_size }}
+       var marker_icon_path = 'M 0, 0 m -'+m_rad+', 0 a '+m_rad+','+m_rad+' 0 1,0 '+2*m_rad+',0 a '+m_rad+','+m_rad+' 0 1,0 -'+2*m_rad+',0';
+       var last_lat = 0.0;
+       var last_lng = 0.0;
+
+       setInterval(
+       function getPoint(){
+		$.ajax({
+                type: "GET",
+                url: "http://localhost:8000/map/getPoint",
+                dataType: "json",
+                success: function(response) {
+                    var lat = parseFloat( response['lat'] );
+                    var lng = parseFloat( response['lng'] );
+
+                    if(last_lat == lat && last_lng == lng) {
+                            //console.log("Nie dodam drugi raz tego samego, mordo")
+                    } else {
+                            addPoint(lat, lng)
+                            last_lat = lat;
+                            last_lng = lng;
+                    }
+                },
+                error: function(response) {
+                        console.log("Error!")
+                }
+        });
+	  }, 1000);
+
+	  function addPoint(lat, lng){
+          new google.maps.Marker({
+              position: {lat: lat, lng: lng },
+              map: map,
+              icon: {
+                  path: marker_icon_path,
+                  fillColor: 'red', fillOpacity: 1.0, strokeOpacity: 0.0, scale: 1
+              },
+              title: lat + ", " + lng
+          });
+      }
+
+      function initMap() {
+          var center_pos = {lat: {{ center_lat }}, lng: {{ center_lng }} }
+          map = new google.maps.Map(document.getElementById('map'), {
+              zoom: {{ zoom }},
+              center: center_pos,
+              scrollwheel: true,
+              draggable: true,
+              mapTypeId: 'satellite',
+          });
+
+          {% for point in points_list %}
+               addPoint( {{ point.lat }} , {{ point.lng }} )
+          {% endfor %}
+
+
+          var areaCoords = [
+            {% for lat, lng in areacords %}
+            {lat: {{ lat }} , lng: {{ lng }} },
+            {% endfor %}
+           ];
+
+          var area = new google.maps.Polygon({
+            paths: areaCoords,
+            strokeColor: 'yellow',
+            strokeOpacity: 0.9,
+            strokeWeight: 2,
+            fillColor: '#FF0000',
+            fillOpacity: 0.0
+          });
+
+          area.setMap(map);
+      }
+
+
+    </script>
+    <script async defer
+    src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBpqpo1bn0gtT0TyjhlgKB_IrfX3NEjN8Y&callback=initMap">
+    </script>
+  </body>
+</html>
