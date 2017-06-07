@@ -5,6 +5,7 @@ from datetime import datetime
 class Drone(models.Model):
     name = models.CharField(max_length=500)
     time_start = models.BigIntegerField()
+    color = models.CharField(max_length=20)
 
     def __str__(self):
         return "( name: " + str(self.name) + ", time_start: " + str(self.time_start) + " )"

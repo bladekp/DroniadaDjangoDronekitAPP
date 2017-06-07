@@ -14,8 +14,8 @@ class MockThread(object):
         self.drone = apps.get_model("maps.Drone")
         self.beacon = apps.get_model("maps.Beacon")
         self.drone_position = apps.get_model("maps.DronePosition")
-        self.drone.objects.filter().delete()
-        self.beacon.objects.filter().delete()
+        self.drone.objects.all().delete()
+        self.beacon.objects.all().delete()
         self.drone_position.objects.filter().delete()
         thread = threading.Thread(target=self.run, args=())
         thread.daemon = True

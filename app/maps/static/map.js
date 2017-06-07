@@ -6,7 +6,7 @@ setInterval(
     function getPoint() {
         $.ajax({
             type: "GET",
-            url: "http://localhost:8000/map/getPoints?LastSuccessCallTime=" + last_success_call_time,
+            url: "http://localhost:8000/map/getData?LastSuccessCallTime=" + last_success_call_time,
             dataType: "json",
             success: parseSuccess,
             error: errorHandler
