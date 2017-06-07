@@ -2,6 +2,7 @@
 <html>
   <head>
     <style>
+      /*TODO move this to separate css file */
        #map {
         height: 97vh;
         width: 98vw;
@@ -12,44 +13,61 @@
   <body>
     <div id="map"></div>
     <script>
+      //TODO move this to separate js file
+
        var m_rad = {{ marker_size }}
        var marker_icon_path = 'M 0, 0 m -'+m_rad+', 0 a '+m_rad+','+m_rad+' 0 1,0 '+2*m_rad+',0 a '+m_rad+','+m_rad+' 0 1,0 -'+2*m_rad+',0';
-       var last_lat = 0.0;
-       var last_lng = 0.0;
+       var last_success_call_time = 0;
 
        setInterval(
        function getPoint(){
 		$.ajax({
                 type: "GET",
-                url: "http://localhost:8000/map/getPoint",
+                url: "http://localhost:8000/map/getPoints?LastSuccessCallTime=" + last_success_call_time,
                 dataType: "json",
-                success: function(response) {
-                    var lat = parseFloat( response['lat'] );
-                    var lng = parseFloat( response['lng'] );
-
-                    if(last_lat == lat && last_lng == lng) {
-                            //console.log("Nie dodam drugi raz tego samego, mordo")
-                    } else {
-                            addPoint(lat, lng)
-                            last_lat = lat;
-                            last_lng = lng;
-                    }
-                },
-                error: function(response) {
-                        console.log("Error!")
-                }
+                success: parseSuccess,
+                error: errorHandler
         });
 	  }, 1000);
 
-	  function addPoint(lat, lng){
+      function errorHandler(response, options, error){
+          console.error("Error while trying to retrieve beacon and drone data from server.");
+          console.error(response);
+          console.error(response.responseText);
+          console.log(error);
+      }
+
+      function parseSuccess(response){
+        last_success_call_time = response.last_success_call_time;
+        addBeaconPoints(response.beacons_positions);
+        addDronePoints(response.drones_positions);
+      }
+
+      function addDronePoints(points){
+        for (var i=0; i<points.length; i++){
+          var latitude = parseFloat(points[i].fields.latitude);
+          var longitude = parseFloat(points[i].fields.longitude);
+          addPoint(latitude, longitude);
+        }
+      }
+
+      function addBeaconPoints(beacons){
+        for (var i=0; i<beacons.length; i++){
+          var latitude = parseFloat(beacons[i]['latitude']);
+          var longitude = parseFloat(beacons[i]['longitude']);
+          addPoint(latitude, longitude);
+        }
+      }
+
+	  function addPoint(latitude, longitude){
           new google.maps.Marker({
-              position: {lat: lat, lng: lng },
+              position: {lat: latitude, lng: longitude },
               map: map,
               icon: {
                   path: marker_icon_path,
                   fillColor: 'red', fillOpacity: 1.0, strokeOpacity: 0.0, scale: 1
               },
-              title: lat + ", " + lng
+              title: latitude + ", " + longitude
           });
       }
 
@@ -63,11 +81,6 @@
               mapTypeId: 'satellite',
           });
 
-          {% for point in points_list %}
-               addPoint( {{ point.lat }} , {{ point.lng }} )
-          {% endfor %}
-
-
           var areaCoords = [
             {% for lat, lng in areacords %}
             {lat: {{ lat }} , lng: {{ lng }} },
@@ -77,19 +90,15 @@
           var area = new google.maps.Polygon({
             paths: areaCoords,
             strokeColor: 'yellow',
-            strokeOpacity: 0.9,
-            strokeWeight: 2,
-            fillColor: '#FF0000',
-            fillOpacity: 0.0
+            strokeOpacity: 1,
+            strokeWeight: 5,
+            fillColor: 'green',
+            fillOpacity: 0.3
           });
 
           area.setMap(map);
       }
-
-
     </script>
-    <script async defer
-    src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBpqpo1bn0gtT0TyjhlgKB_IrfX3NEjN8Y&callback=initMap">
-    </script>
+    <script async defer src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBpqpo1bn0gtT0TyjhlgKB_IrfX3NEjN8Y&callback=initMap"></script>
   </body>
 </html>

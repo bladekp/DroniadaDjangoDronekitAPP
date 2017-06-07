@@ -1,17 +1,16 @@
 from django.shortcuts import render
 from django.http import HttpResponse
-from .models import Point
-import json
+from .models import DronePosition
+from django.core import serializers
+from droniada.utils import UtilClass
 
 
 def render_map(request):
-    points_list = Point.objects.all()  # [:3]
     context = {
         'center_lat': 50.089684,
         'center_lng': 20.202649,
         'zoom': 16,
         'marker_size': 5,
-        'points_list': points_list,
         'areacords':[ #clockwise direction
             [50.0931667, 20.1916000], #north-west corner
             [50.0931667, 20.2000000],
@@ -29,10 +28,16 @@ def render_map(request):
     return render(request, 'maps/map.html', context)
 
 
-def get_point(request):
+def get_points(request):
     if request.method == 'GET':
-        point = Point.objects.last()
-        return HttpResponse(json.dumps({"lat":point.lat, "lng":point.lng}), content_type="application/json")
-    else:
-        return HttpResponse(json.dumps({'error': 'GET method required'}), content_type="application/json")
+        last_success_call_time = request.GET.get('LastSuccessCallTime')
+        dronepositions = serializers.serialize("json", DronePosition.objects.filter(time__gte=last_success_call_time))
+        beaconpositions = "[]"
+        return HttpResponse(
+            '{' +
+                '"drones_positions":' + dronepositions + ','
+                '"beacons_positions":' + beaconpositions + ','
+                '"last_success_call_time":' + str(UtilClass.milis_after_epoch()) +
+            '}'
+            , content_type="application/json")
 

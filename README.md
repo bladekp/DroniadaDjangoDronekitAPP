@@ -5,3 +5,7 @@
 * Install PyCharm <https://www.jetbrains.com/pycharm/download/#section=linux>
 * Clone project from github
 * Start working
+
+Please run app with --noreload:
+
+`python manage.py runserver --noreload`

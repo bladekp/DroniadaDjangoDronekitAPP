@@ -1,7 +1,7 @@
 from django.contrib import admin
 
-from .models import Point
+from .models import DronePosition
 
-admin.site.register(Point)
+admin.site.register(DronePosition)
 
 # Register your models here.
