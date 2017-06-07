@@ -6,26 +6,7 @@ from droniada.utils import UtilClass
 
 
 def render_map(request):
-    context = {
-        'center_lat': 50.089684,
-        'center_lng': 20.202649,
-        'zoom': 16,
-        'marker_size': 5,
-        'areacords':[ #clockwise direction
-            [50.0931667, 20.1916000], #north-west corner
-            [50.0931667, 20.2000000],
-            [50.0931667, 20.2066167],
-            [50.0903500, 20.2090667],
-            [50.0883333, 20.2090667],
-            [50.0883333, 20.2029000],
-            [50.0883333, 20.2000000],
-            [50.0883333, 20.1970000],
-            [50.0883333, 20.1926833],
-            [50.0906167, 20.1919500],
-            [50.0916333, 20.1916000]
-        ]
-    }
-    return render(request, 'maps/map.html', context)
+    return render(request, 'maps/map.html')
 
 
 def get_points(request):
