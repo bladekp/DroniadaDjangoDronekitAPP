@@ -22,8 +22,8 @@ class MockThread(object):
         thread.start()
 
     def run(self):
-        d1 = self.create_mock_drone("Mock Drone 1")
-        d2 = self.create_mock_drone("Mock Drone 2")
+        d1 = self.create_mock_drone("Mock Drone 1", "#000000")
+        d2 = self.create_mock_drone("Mock Drone 2", "#ffffff")
         while True:
             if randint(1, 2) == 1:
                 self.create_mock_beacon(d1)
@@ -37,8 +37,8 @@ class MockThread(object):
                 self.create_mock_position(d2)
             time.sleep(randint(3, 4))
 
-    def create_mock_drone(self, name):
-        d = self.drone(name=name, time_start=UtilClass.milis_after_epoch())
+    def create_mock_drone(self, name, color):
+        d = self.drone(name=name, time_start=UtilClass.milis_after_epoch(), color=color)
         d.save()
         return d
 

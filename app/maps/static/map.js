@@ -1,17 +1,18 @@
 var m_rad = 5;
 var marker_icon_path = 'M 0, 0 m -' + m_rad + ', 0 a ' + m_rad + ',' + m_rad + ' 0 1,0 ' + 2 * m_rad + ',0 a ' + m_rad + ',' + m_rad + ' 0 1,0 -' + 2 * m_rad + ',0';
 var last_success_call_time = 0;
+var DRONES = [];
 
 setInterval(
     function getPoint() {
         $.ajax({
             type: "GET",
-            url: "http://localhost:8000/map/getData?LastSuccessCallTime=" + last_success_call_time,
+            url: "http://localhost:8000/map/getData/?LastSuccessCallTime=" + last_success_call_time,
             dataType: "json",
             success: parseSuccess,
             error: errorHandler
         });
-    }, 1000);
+    }, 5000);
 
 function errorHandler(response, options, error) {
     console.error("Error while trying to retrieve beacon and drone data from server.");
@@ -22,15 +23,47 @@ function errorHandler(response, options, error) {
 
 function parseSuccess(response) {
     last_success_call_time = response.last_success_call_time;
+    updateDrones(response.drones);
     addBeaconPoints(response.beacons_positions);
-    addDronePoints(response.drones_positions);
+    addDronesPolyline(response.drones_positions);
 }
 
-function addDronePoints(points) {
+function updateDrones(drones){
+    var found = false;
+    for (var i = 0; i < drones.length; i++){
+        for (var j = 0; j < DRONES.length; j++) {
+            if (DRONES[j].pk === drones[i].pk) {
+                found = true;
+            }
+        }
+        if (!found){
+            DRONES.push(drones[i]);
+        }
+        found = false;
+    }
+}
+
+function findDrone(id){
+    for (var i = 0; i < DRONES.length; i++){
+        if( DRONES[i].pk === id) return DRONES[i];
+    }
+    console.error("Any drone with id " + id + " found.");
+}
+
+function addDronesPolyline(points) {
     for (var i = 0; i < points.length; i++) {
         var latitude = parseFloat(points[i].fields.latitude);
         var longitude = parseFloat(points[i].fields.longitude);
-        addPoint(latitude, longitude);
+        var drone = findDrone(points[i].fields.drone);
+        var lastPoint = drone.fields.last_position;
+        drone.fields.last_position = {
+            lat: latitude,
+            lng: longitude
+        };
+        if (typeof lastPoint !== "undefined"){
+            addPolyline(lastPoint, drone.fields.last_position, drone.fields.color);
+        }
+        //addPoint(latitude, longitude, drone.fields.color); //actually we have polyline, we do not need additional point
     }
 }
 
@@ -42,15 +75,29 @@ function addBeaconPoints(beacons) {
     }
 }
 
-function addPoint(latitude, longitude) {
+function addPoint(latitude, longitude, color) {
     new google.maps.Marker({
         position: {lat: latitude, lng: longitude},
         map: map,
         icon: {
             path: marker_icon_path,
-            fillColor: 'red', fillOpacity: 1.0, strokeOpacity: 0.0, scale: 1
+            fillColor: color, fillOpacity: 1.0, strokeOpacity: 0.0, scale: 1
         },
         title: latitude + ", " + longitude
+    });
+}
+
+function addPolyline(p1, p2, color){
+    new google.maps.Polyline({
+          path: [
+              p1,
+              p2
+          ],
+          map: map,
+          geodesic: true,
+          strokeColor: color,
+          strokeOpacity: 1.0,
+          strokeWeight: 2
     });
 }
 
