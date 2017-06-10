@@ -22,7 +22,7 @@ class MockThread(object):
         thread.start()
 
     def run(self):
-        d1 = self.create_mock_drone("Mock Drone 1", "#000000")
+        d1 = self.create_mock_drone("Mock Drone 1", "#0000ff")
         d2 = self.create_mock_drone("Mock Drone 2", "#ffffff")
         while True:
             if randint(1, 2) == 1:

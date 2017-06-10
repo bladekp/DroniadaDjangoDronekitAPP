@@ -62,8 +62,9 @@ function addDronesPolyline(points) {
         };
         if (typeof lastPoint !== "undefined"){
             addPolyline(lastPoint, drone.fields.last_position, drone.fields.color);
+        } else {
+            addPoint(latitude, longitude, drone.fields.color); //add point if just one point (start point)
         }
-        //addPoint(latitude, longitude, drone.fields.color); //actually we have polyline, we do not need additional point
     }
 }
 
