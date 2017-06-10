@@ -12,7 +12,7 @@ setInterval(
             success: parseSuccess,
             error: errorHandler
         });
-    }, 5000);
+    }, 500);
 
 function errorHandler(response, options, error) {
     console.error("Error while trying to retrieve beacon and drone data from server.");
@@ -24,8 +24,8 @@ function errorHandler(response, options, error) {
 function parseSuccess(response) {
     last_success_call_time = response.last_success_call_time;
     updateDrones(response.drones);
-    addBeaconPoints(response.beacons_positions);
     addDronesPolyline(response.drones_positions);
+    addBeaconPoints(response.beacons_positions);
 }
 
 function updateDrones(drones){
@@ -63,28 +63,42 @@ function addDronesPolyline(points) {
         if (typeof lastPoint !== "undefined"){
             addPolyline(lastPoint, drone.fields.last_position, drone.fields.color);
         } else {
-            addPoint(latitude, longitude, drone.fields.color); //add point if just one point (start point)
+            addPoint(latitude, longitude, drone.fields.color, "", 1); //add point if just one point (start point)
         }
     }
 }
 
 function addBeaconPoints(beacons) {
     for (var i = 0; i < beacons.length; i++) {
-        var latitude = parseFloat(beacons[i]['latitude']);
-        var longitude = parseFloat(beacons[i]['longitude']);
-        addPoint(latitude, longitude);
+        var latitude = beacons[i].latitude;
+        var longitude = beacons[i].longitude;
+        var altitude = beacons[i].altitude;
+        var scale = (100-beacons[i].altitude)/30;
+        var color = beacons[i].major === 4 ? "red" :
+                    beacons[i].major === 3 ? "yellow" :
+                    beacons[i].major === 2 ? "green" :
+                    beacons[i].major === 1 ? "#696969" : "white";
+        var title = beacons[i].rssi + " " + beacons[i].minor;
+        if (beacons[i].major > 4 || beacons[i].major < 1){
+            title += " "+ beacons[i].major;
+        }
+        addPoint(latitude, longitude, color, title , scale );
     }
 }
 
-function addPoint(latitude, longitude, color) {
+function addPoint(latitude, longitude, color, title, scale) {
     new google.maps.Marker({
         position: {lat: latitude, lng: longitude},
         map: map,
         icon: {
             path: marker_icon_path,
-            fillColor: color, fillOpacity: 1.0, strokeOpacity: 0.0, scale: 1
+            fillColor: color,
+            fillOpacity: 1.0,
+            strokeOpacity: 0.0,
+            scale: scale
         },
-        title: latitude + ", " + longitude
+        label: title,
+        title: title
     });
 }
 
@@ -109,7 +123,7 @@ function initMap() {
         center: center_pos,
         scrollwheel: true,
         draggable: true,
-        mapTypeId: 'satellite',
+        mapTypeId: 'satellite'
     });
 
     /* north-west corner, clockwise direction */
@@ -129,11 +143,11 @@ function initMap() {
 
     var area = new google.maps.Polygon({
         paths: areaCoords,
-        strokeColor: 'yellow',
+        strokeColor: '#FFA500',
         strokeOpacity: 1,
         strokeWeight: 5,
         fillColor: 'green',
-        fillOpacity: 0.3
+        fillOpacity: 0.2
     });
 
     area.setMap(map);

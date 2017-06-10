@@ -19,7 +19,7 @@ class DronePosition(models.Model):
     drone = models.ForeignKey(Drone)
 
     def __str__(self):
-        return "( lat: " + str(self.latitude) + ", lng: " + str(self.longitude) + ", alt: " + str(self.longitude) + " )"
+        return "( lat: " + str(self.latitude) + ", lng: " + str(self.longitude) + ", alt: " + str(self.altitude) + " )"
 
 
 class Beacon(models.Model):
@@ -28,6 +28,7 @@ class Beacon(models.Model):
     rssi = models.IntegerField()
     time = models.BigIntegerField()
     drone = models.ForeignKey(Drone)
+    sent = models.BooleanField(default=False) #TODO: this means we can have at most one client
 
     def __str__(self):
         return "( major: " + str(self.major) + ", minor: " + str(self.minor) + ", rssi: " + str(self.rssi) + " )"

@@ -1,34 +1,69 @@
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals
-from django.apps import AppConfig
-from django.apps import apps
+
 import dronekit
 import exceptions
 from datetime import datetime
+from django.apps import AppConfig
+from django.apps import apps
 from django.conf import settings
+
 from mock import MockThread
+from utils import UtilClass
+from random import randint
+import random
 
 
 class DroniadaConfig(AppConfig):
     name = 'droniada'
 
     def ready(self):
+        self.drone = apps.get_model("maps.Drone")
+        self.beacon = apps.get_model("maps.Beacon")
+        self.drone_position = apps.get_model("maps.DronePosition")
+        #TODO temporary
+        self.drone.objects.all().delete()
+        self.beacon.objects.all().delete()
+        self.drone_position.objects.all().delete()
         if settings.MOCK:
             MockThread()
         else:
             try:
-                vehicle = dronekit.connect("/dev/ttyUSB2", baud=57600)
-                drone = apps.get_model("maps.Drone")
-                d = drone(name="Black Quadrocopter", start_time=datetime.now)
+                vehicle = dronekit.connect("/dev/ttyUSB0", baud=57600)
+                d = self.drone(name="Black Quadrocopter", time_start=0, color="#1E90FF")
                 d.save()
-                beacon = apps.get_model("maps.Beacon")
+
+                @vehicle.on_message("SYSTEM_TIME")
+                def listener(selfx, name, message):
+                    if d.time_start == 0:
+                        d.time_start = UtilClass.milis_after_epoch() - message.time_boot_ms
+                        d.save()
+                    print '%s' % message
 
                 @vehicle.on_message("VIBRATION")
-                def listener(self, name, message):
-                    #TODO time property
-                    b = beacon(major=message.clipping_0, minor=message.clipping_1, rssi=message.clipping_2, time=0, drone=d)
-                    b.save()
+                def listener(selfx, name, message):
+                    if d.time_start != 0:
+                        b = self.beacon(major=message.clipping_0, minor=message.clipping_1, rssi=message.clipping_2, time=d.time_start + message.time_usec, drone=d)
+                        b.save()
                     print '%s' % message
+
+                @vehicle.on_message("GLOBAL_POSITION_INT")
+                def listener(selfx, name, message):
+                    lat = message.lat / 10000000
+                    lon = message.lon / 10000000
+                    alt = message.alt
+                    if lat != 0 and lon != 0 and d.time_start != 0:
+                        dp = self.drone_position(latitude=lat, longitude=lon, altitude=alt, time=d.time_start + message.time_boot_ms ,drone=d)
+                        dp.save()
+                    else:
+                        #TODO: temporary
+                        dp = self.drone_position(latitude=random.uniform(50.088, 50.094),
+                                                 longitude=random.uniform(20.190, 20.210),
+                                                 altitude=random.uniform(0.000, 50.000),
+                                                 time=d.time_start + message.time_boot_ms, drone=d)
+                        dp.save()
+                    print '%s' % message
+
             except exceptions.OSError as e:
                 print 'No serial exists!'
             except dronekit.APIException:

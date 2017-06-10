@@ -16,14 +16,14 @@ class MockThread(object):
         self.drone_position = apps.get_model("maps.DronePosition")
         self.drone.objects.all().delete()
         self.beacon.objects.all().delete()
-        self.drone_position.objects.filter().delete()
+        self.drone_position.objects.all().delete()
         thread = threading.Thread(target=self.run, args=())
         thread.daemon = True
         thread.start()
 
     def run(self):
-        d1 = self.create_mock_drone("Mock Drone 1", "#0000ff")
-        d2 = self.create_mock_drone("Mock Drone 2", "#ffffff")
+        d1 = self.create_mock_drone("Mock Drone 1", "#7FFFD4")
+        d2 = self.create_mock_drone("Mock Drone 2", "#1E90FF")
         while True:
             if randint(1, 2) == 1:
                 self.create_mock_beacon(d1)
