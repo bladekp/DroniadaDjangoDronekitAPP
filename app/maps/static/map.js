@@ -7,7 +7,7 @@ setInterval(
     function getPoint() {
         $.ajax({
             type: "GET",
-            url: "http://localhost:8000/map/getData/?LastSuccessCallTime=" + last_success_call_time,
+            url: "http://192.168.0.10:8000/map/getData/?LastSuccessCallTime=" + last_success_call_time,
             dataType: "json",
             success: parseSuccess,
             error: errorHandler
@@ -70,20 +70,20 @@ function addDronesPolyline(points) {
 
 function addBeaconPoints(beacons) {
     for (var i = 0; i < beacons.length; i++) {
-        var latitude = beacons[i].latitude;
-        var longitude = beacons[i].longitude;
-        var altitude = beacons[i].altitude;
-        var scale = (100-beacons[i].altitude)/30;
-        var color = beacons[i].major === 4 ? "red" :
-                    beacons[i].major === 3 ? "yellow" :
-                    beacons[i].major === 2 ? "green" :
-                    beacons[i].major === 1 ? "#696969" : "white";
-        var label = beacons[i].rssi + " " + beacons[i].minor;
-        if (beacons[i].major > 4 || beacons[i].major < 1){
-            label += " "+ beacons[i].major;
+        var latitude = beacons[i].fields.latitude;
+        var longitude = beacons[i].fields.longitude;
+        var altitude = beacons[i].fields.altitude;
+        var scale = (100-beacons[i].fields.altitude)/30;
+        var color = beacons[i].fields.major === 4 ? "red" :
+                    beacons[i].fields.major === 3 ? "yellow" :
+                    beacons[i].fields.major === 2 ? "green" :
+                    beacons[i].fields.major === 1 ? "#696969" : "white";
+        var label = beacons[i].fields.rssi + " " + beacons[i].fields.minor;
+        if (beacons[i].fields.major > 4 || beacons[i].fields.major < 1){
+            label += " "+ beacons[i].fields.major;
         }
         var title = Math.round(altitude*100)/100 + " m";
-        addPoint(latitude, longitude, color, label, title , 1.0 );
+        addPoint(latitude, longitude, color, label, title , 3.0 );
     }
 }
 

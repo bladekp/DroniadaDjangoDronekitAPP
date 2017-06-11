@@ -28,7 +28,7 @@ DEBUG = True
 # Used to determine if we are using mock.py data or real dronekit data
 MODE = "ANDROID"  # MOCK, ANDROID, DRONEKIT
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = [u'*']
 
 
 # Application definition
