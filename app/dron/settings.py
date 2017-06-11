@@ -26,7 +26,7 @@ SECRET_KEY = '^+futs*@p&z(@7n1$aj#2#0@5w^b8pwurw(6p%w164_#l1qwpp'
 DEBUG = True
 
 # Used to determine if we are using mock.py data or real dronekit data
-MOCK = True
+MODE = "ANDROID"  # MOCK, ANDROID, DRONEKIT
 
 ALLOWED_HOSTS = []
 

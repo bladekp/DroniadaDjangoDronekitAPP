@@ -63,7 +63,7 @@ function addDronesPolyline(points) {
         if (typeof lastPoint !== "undefined"){
             addPolyline(lastPoint, drone.fields.last_position, drone.fields.color);
         } else {
-            addPoint(latitude, longitude, drone.fields.color, "", 1); //add point if just one point (start point)
+            addPoint(latitude, longitude, drone.fields.color, "", drone.fields.name, 1); //add point if just one point (start point)
         }
     }
 }
@@ -78,15 +78,16 @@ function addBeaconPoints(beacons) {
                     beacons[i].major === 3 ? "yellow" :
                     beacons[i].major === 2 ? "green" :
                     beacons[i].major === 1 ? "#696969" : "white";
-        var title = beacons[i].rssi + " " + beacons[i].minor;
+        var label = beacons[i].rssi + " " + beacons[i].minor;
         if (beacons[i].major > 4 || beacons[i].major < 1){
-            title += " "+ beacons[i].major;
+            label += " "+ beacons[i].major;
         }
-        addPoint(latitude, longitude, color, title , scale );
+        var title = Math.round(altitude*100)/100 + " m";
+        addPoint(latitude, longitude, color, label, title , 1.0 );
     }
 }
 
-function addPoint(latitude, longitude, color, title, scale) {
+function addPoint(latitude, longitude, color, label, title, scale) {
     new google.maps.Marker({
         position: {lat: latitude, lng: longitude},
         map: map,
@@ -97,7 +98,7 @@ function addPoint(latitude, longitude, color, title, scale) {
             strokeOpacity: 0.0,
             scale: scale
         },
-        label: title,
+        label: label,
         title: title
     });
 }

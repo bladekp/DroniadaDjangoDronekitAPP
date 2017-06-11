@@ -25,9 +25,9 @@ class DroniadaConfig(AppConfig):
         self.drone.objects.all().delete()
         self.beacon.objects.all().delete()
         self.drone_position.objects.all().delete()
-        if settings.MOCK:
+        if settings.MODE == "MOCK":
             MockThread()
-        else:
+        if settings.MODE == "DRONEKIT":
             try:
                 vehicle = dronekit.connect("/dev/ttyUSB0", baud=57600)
                 d = self.drone(name="Black Quadrocopter", time_start=0, color="#1E90FF")
@@ -49,18 +49,11 @@ class DroniadaConfig(AppConfig):
 
                 @vehicle.on_message("GLOBAL_POSITION_INT")
                 def listener(selfx, name, message):
-                    lat = message.lat / 10000000
-                    lon = message.lon / 10000000
+                    lat = float(message.lat) / 10000000
+                    lon = float(message.lon) / 10000000
                     alt = message.alt
                     if lat != 0 and lon != 0 and d.time_start != 0:
                         dp = self.drone_position(latitude=lat, longitude=lon, altitude=alt, time=d.time_start + message.time_boot_ms ,drone=d)
-                        dp.save()
-                    else:
-                        #TODO: temporary
-                        dp = self.drone_position(latitude=random.uniform(50.088, 50.094),
-                                                 longitude=random.uniform(20.190, 20.210),
-                                                 altitude=random.uniform(0.000, 50.000),
-                                                 time=d.time_start + message.time_boot_ms, drone=d)
                         dp.save()
                     print '%s' % message
 
@@ -70,4 +63,5 @@ class DroniadaConfig(AppConfig):
                 print 'Timeout!'
 
             #vehicle.close()
-
+        if settings.MODE == "ANDROID":
+            print "ANDROID mode"
