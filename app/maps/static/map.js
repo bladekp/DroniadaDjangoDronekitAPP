@@ -9,7 +9,7 @@ setInterval(
     function getPoint() {
         $.ajax({
             type: "GET",
-            url: "http://192.168.0.10:8000/map/getData/?StartTime=" + startTime,
+            url: "http://remote.jgwservices.com:8000/map/getData/?StartTime=" + startTime,
             dataType: "json",
             success: parseSuccess,
             error: errorHandler
