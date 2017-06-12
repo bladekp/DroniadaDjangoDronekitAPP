@@ -22,9 +22,9 @@ class DroniadaConfig(AppConfig):
         self.beacon = apps.get_model("maps.Beacon")
         self.drone_position = apps.get_model("maps.DronePosition")
         #TODO temporary
-        self.drone.objects.all().delete()
-        self.beacon.objects.all().delete()
-        self.drone_position.objects.all().delete()
+        #self.drone.objects.all().delete()
+        #self.beacon.objects.all().delete()
+        #self.drone_position.objects.all().delete()
         if settings.MODE == "MOCK":
             MockThread()
         if settings.MODE == "DRONEKIT":

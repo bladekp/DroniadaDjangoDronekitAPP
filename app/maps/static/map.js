@@ -1,13 +1,15 @@
 var m_rad = 5;
 var marker_icon_path = 'M 0, 0 m -' + m_rad + ', 0 a ' + m_rad + ',' + m_rad + ' 0 1,0 ' + 2 * m_rad + ',0 a ' + m_rad + ',' + m_rad + ' 0 1,0 -' + 2 * m_rad + ',0';
-var last_success_call_time = 0;
+var startTime = 0;
 var DRONES = [];
+var markers = [];
+var polylines = [];
 
 setInterval(
     function getPoint() {
         $.ajax({
             type: "GET",
-            url: "http://192.168.0.10:8000/map/getData/?LastSuccessCallTime=" + last_success_call_time,
+            url: "http://192.168.0.10:8000/map/getData/?StartTime=" + startTime,
             dataType: "json",
             success: parseSuccess,
             error: errorHandler
@@ -22,7 +24,6 @@ function errorHandler(response, options, error) {
 }
 
 function parseSuccess(response) {
-    last_success_call_time = response.last_success_call_time;
     updateDrones(response.drones);
     addDronesPolyline(response.drones_positions);
     addBeaconPoints(response.beacons_positions);
@@ -88,7 +89,7 @@ function addBeaconPoints(beacons) {
 }
 
 function addPoint(latitude, longitude, color, label, title, scale) {
-    new google.maps.Marker({
+    var marker = new google.maps.Marker({
         position: {lat: latitude, lng: longitude},
         map: map,
         icon: {
@@ -101,10 +102,11 @@ function addPoint(latitude, longitude, color, label, title, scale) {
         label: label,
         title: title
     });
+    markers.push(marker);
 }
 
 function addPolyline(p1, p2, color){
-    new google.maps.Polyline({
+    var polyline = new google.maps.Polyline({
           path: [
               p1,
               p2
@@ -115,6 +117,7 @@ function addPolyline(p1, p2, color){
           strokeOpacity: 1.0,
           strokeWeight: 2
     });
+    polylines.push(polyline);
 }
 
 function initMap() {
@@ -153,3 +156,39 @@ function initMap() {
 
     area.setMap(map);
 }
+
+$(function () {
+    var d = new Date();
+    var month = d.getMonth();
+    var day = d.getDate();
+    var year = d.getFullYear();
+    var hour = d.getHours();
+    var minute = d.getMinutes();
+
+    $('#datetimepicker1')
+        .datetimepicker({
+            locale: 'pl',
+            defaultDate: new Date()
+        });
+
+    startTime = d.getTime();
+});
+
+
+function buttonEvent() {
+    for (var i = 0; i < markers.length; i++) {
+          markers[i].setMap(null);
+    }
+    for (var i = 0; i < polylines.length; i++) {
+          polylines[i].setMap(null);
+    }
+    markers = [];
+    polylines = [];
+    var date = $("#datetimepicker1").find("input").val();
+    var parts = date.split(".");
+    var tail = parts[2].split(" ");
+    var hours = tail[1].split(":");
+    var dateP = new Date(tail[0], parts[1] - 1, parts[0], hours[0], hours[1]);
+    startTime = dateP.getTime();
+}
+
