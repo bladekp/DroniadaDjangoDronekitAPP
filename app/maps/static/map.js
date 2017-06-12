@@ -24,6 +24,7 @@ function errorHandler(response, options, error) {
 }
 
 function parseSuccess(response) {
+    startTime = response.current_time;
     updateDrones(response.drones);
     addDronesPolyline(response.drones_positions);
     addBeaconPoints(response.beacons_positions);
