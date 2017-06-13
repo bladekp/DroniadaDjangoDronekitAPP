@@ -1,3 +1,4 @@
+
 var m_rad = 5;
 var marker_icon_path = 'M 0, 0 m -' + m_rad + ', 0 a ' + m_rad + ',' + m_rad + ' 0 1,0 ' + 2 * m_rad + ',0 a ' + m_rad + ',' + m_rad + ' 0 1,0 -' + 2 * m_rad + ',0';
 var startTime = 0;
@@ -156,8 +157,8 @@ function initMap() {
         fillOpacity: 0.2
     });
 
-    var infowindow = new google.maps.InfoWindow({
-        pixelOffset: new google.maps.Size(0,0),
+    var infoWindow = new google.maps.InfoWindow({
+        pixelOffset: new google.maps.Size(0,0)
     });
 
     function popup(event) {
@@ -166,12 +167,12 @@ function initMap() {
         console.log( latitude + ', ' + longitude );
         var latLng = event.latLng;
 
-        infowindow.setContent(latitude + ', ' + longitude);
-        infowindow.setPosition(latLng);
+        infoWindow.setContent('<div id="iw-text">' + latitude + ', ' + longitude + '</div>');
+        infoWindow.setPosition(latLng) ;
 
-        var window_pos = new google.maps.LatLng(latitude, longitude)
-
-        infowindow.open(map);
+        infoWindow.open(map);
+        SelectText('iw-text');
+        document.execCommand('copy');
 
     }
     //Add listener
@@ -201,6 +202,7 @@ $(function () {
 });
 
 
+
 function buttonEvent() {
     for (var i = 0; i < markers.length; i++) {
           markers[i].setMap(null);
@@ -218,3 +220,31 @@ function buttonEvent() {
     startTime = dateP.getTime();
 }
 
+function SelectText(element) {
+    var text = document.getElementById(element);
+    console.log(element);
+    console.log(text);
+    var selection = window.getSelection();
+    var range = document.createRange();
+    range.selectNodeContents(text);
+    selection.removeAllRanges();
+    selection.addRange(range);
+}
+
+//function SelectText(element) {
+//    var text = document.getElementById(element);
+//    if ($.browser.msie) {
+//        var range = document.body.createTextRange();
+//        range.moveToElementText(text);
+//        range.select();
+//    } else if ($.browser.mozilla || $.browser.opera) {
+//        var selection = window.getSelection();
+//        var range = document.createRange();
+//        range.selectNodeContents(text);
+//        selection.removeAllRanges();
+//        selection.addRange(range);
+//    } else if ($.browser.safari) {
+//        var selection = window.getSelection();
+//        selection.setBaseAndExtent(text, 0, text, 1);
+//    }
+//}
