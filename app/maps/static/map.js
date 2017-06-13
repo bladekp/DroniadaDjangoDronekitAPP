@@ -167,14 +167,21 @@ function initMap() {
         console.log( latitude + ', ' + longitude );
         var latLng = event.latLng;
 
-        infoWindow.setContent('<div id="iw-text">' + latitude + ', ' + longitude + '</div>');
+        infoWindowHtml ='<div id="iw-text">' +
+                            '<span id="lat" class="coord">' +
+                                latitude +
+                            '</span>' + ', ' +
+                            '<span id="lng" class="coord">' +
+                                longitude +
+                            '</span>' +
+                         '</div>';
+        console.log(infoWindowHtml);
+        infoWindow.setContent(infoWindowHtml);
         infoWindow.setPosition(latLng) ;
 
         infoWindow.open(map);
-        selectText('iw-text');
-        document.execCommand('copy');
-        clearSelection('iw-text');
-
+        $('#lat').click( { elementId: 'lat'}, copyElementText );
+        $('#lng').click( { elementId: 'lng'}, copyElementText );
 
     }
     //Add listener
@@ -220,6 +227,12 @@ function buttonEvent() {
     var hours = tail[1].split(":");
     var dateP = new Date(tail[0], parts[1] - 1, parts[0], hours[0], hours[1]);
     startTime = dateP.getTime();
+}
+
+function copyElementText(event){
+    selectText(event.data.elementId);
+    document.execCommand('copy');
+    clearSelection(event.data.elementId);
 }
 
 function selectText(element) {

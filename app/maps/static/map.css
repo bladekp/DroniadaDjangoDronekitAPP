@@ -4,6 +4,18 @@
 }
 
 #iw-text {
+    padding: 3px;
     font-size: 16px;
     cursor: text;
+}
+
+.coord {
+    margin: 2px;
+    cursor: pointer;
+}
+
+.coord:active{
+    margin: 0px;
+    border: 2px solid DodgerBlue
+
 }
