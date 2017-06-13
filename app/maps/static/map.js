@@ -9,7 +9,7 @@ setInterval(
     function getPoint() {
         $.ajax({
             type: "GET",
-            url: "http://192.168.0.10:8000/map/getData/?StartTime=" + startTime,
+            url: "http://localhost:8000/map/getData/?StartTime=" + startTime,
             dataType: "json",
             success: parseSuccess,
             error: errorHandler
@@ -131,6 +131,7 @@ function initMap() {
         mapTypeId: 'satellite'
     });
 
+
     /* north-west corner, clockwise direction */
     var areaCoords = [
         {lat: 50.0931667, lng: 20.1916000},
@@ -154,6 +155,30 @@ function initMap() {
         fillColor: 'green',
         fillOpacity: 0.2
     });
+
+    var infowindow = new google.maps.InfoWindow({
+        pixelOffset: new google.maps.Size(0,0),
+    });
+
+    function popup(event) {
+        var latitude = event.latLng.lat();
+        var longitude = event.latLng.lng();
+        console.log( latitude + ', ' + longitude );
+        var latLng = event.latLng;
+
+        infowindow.setContent(latitude + ', ' + longitude);
+        infowindow.setPosition(latLng);
+
+        var window_pos = new google.maps.LatLng(latitude, longitude)
+
+        infowindow.open(map);
+
+    }
+    //Add listener
+    google.maps.event.addListener(map, "click", popup); //end addListener
+
+    //Add listener
+    google.maps.event.addListener(area, "click", popup); //end addListener
 
     area.setMap(map);
 }
