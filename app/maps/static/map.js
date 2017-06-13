@@ -180,6 +180,9 @@ function initMap() {
         infoWindow.setPosition(latLng) ;
 
         infoWindow.open(map);
+        selectText('iw-text');
+        document.execCommand('copy');
+        clearSelection('iw-text');
         $('#lat').click( { elementId: 'lat'}, copyElementText );
         $('#lng').click( { elementId: 'lng'}, copyElementText );
 

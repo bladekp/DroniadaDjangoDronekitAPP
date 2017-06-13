@@ -2,7 +2,6 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="4fcd0a71-e5d6-4e7b-9e76-0b111849d353" name="Default" comment="">
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/app/maps/static/map.css" afterPath="$PROJECT_DIR$/app/maps/static/map.css" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/app/maps/static/map.js" afterPath="$PROJECT_DIR$/app/maps/static/map.js" />
     </list>
     <ignored path="DroniadaDjangoDronekitAPP.iws" />
@@ -36,8 +35,8 @@
       <file leaf-file-name="map.js" pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/app/maps/static/map.js">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="-516">
-              <caret line="180" column="0" selection-start-line="180" selection-start-column="0" selection-end-line="180" selection-end-column="0" />
+            <state relative-caret-position="198">
+              <caret line="184" column="34" selection-start-line="184" selection-start-column="34" selection-end-line="184" selection-end-column="34" />
               <folding />
             </state>
           </provider>
@@ -453,7 +452,7 @@
     <servers />
   </component>
   <component name="ToolWindowManager">
-    <frame x="-8" y="-8" width="1616" height="876" extended-state="7" />
+    <frame x="-8" y="-8" width="1616" height="876" extended-state="6" />
     <editor active="true" />
     <layout>
       <window_info id="Project" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" show_stripe_button="true" weight="0.25" sideWeight="0.5" order="0" side_tool="false" content_ui="combo" />
@@ -829,8 +828,8 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/app/maps/static/map.js">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="-516">
-          <caret line="180" column="0" selection-start-line="180" selection-start-column="0" selection-end-line="180" selection-end-column="0" />
+        <state relative-caret-position="198">
+          <caret line="184" column="34" selection-start-line="184" selection-start-column="34" selection-end-line="184" selection-end-column="34" />
           <folding />
         </state>
       </provider>
