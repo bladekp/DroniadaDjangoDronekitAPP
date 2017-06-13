@@ -10,12 +10,17 @@
 }
 
 .coord {
-    margin: 2px;
+    margin: 1px;
     cursor: pointer;
+}
+
+.coord:hover{
+    color: DarkBlue;
+    text-decoration: underline;
 }
 
 .coord:active{
     margin: 0px;
-    border: 2px solid DodgerBlue
+    border: 1px solid DodgerBlue
 
 }
