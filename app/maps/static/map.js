@@ -171,8 +171,10 @@ function initMap() {
         infoWindow.setPosition(latLng) ;
 
         infoWindow.open(map);
-        SelectText('iw-text');
+        selectText('iw-text');
         document.execCommand('copy');
+        clearSelection('iw-text');
+
 
     }
     //Add listener
@@ -220,15 +222,22 @@ function buttonEvent() {
     startTime = dateP.getTime();
 }
 
-function SelectText(element) {
+function selectText(element) {
     var text = document.getElementById(element);
-    console.log(element);
-    console.log(text);
     var selection = window.getSelection();
     var range = document.createRange();
     range.selectNodeContents(text);
     selection.removeAllRanges();
     selection.addRange(range);
+}
+
+function clearSelection(element) {
+    var text = document.getElementById(element);
+    var selection = window.getSelection();
+    var range = document.createRange();
+    range.selectNodeContents(text);
+    selection.removeAllRanges();
+    //selection.addRange(range);
 }
 
 //function SelectText(element) {
