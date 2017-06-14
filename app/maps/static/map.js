@@ -44,6 +44,7 @@ function updateDrones(drones){
         }
         found = false;
     }
+    updateLegend();
 }
 
 function findDrone(id){
@@ -175,7 +176,6 @@ function initMap() {
                                 longitude +
                             '</span>' +
                          '</div>';
-        console.log(infoWindowHtml);
         infoWindow.setContent(infoWindowHtml);
         infoWindow.setPosition(latLng) ;
 
@@ -192,6 +192,9 @@ function initMap() {
 
     //Add listener
     google.maps.event.addListener(area, "click", popup); //end addListener
+
+    var legend = document.getElementById('legend');
+    map.controls[google.maps.ControlPosition.RIGHT_BOTTOM].push(legend);
 
     area.setMap(map);
 }
@@ -256,20 +259,16 @@ function clearSelection(element) {
     //selection.addRange(range);
 }
 
-//function SelectText(element) {
-//    var text = document.getElementById(element);
-//    if ($.browser.msie) {
-//        var range = document.body.createTextRange();
-//        range.moveToElementText(text);
-//        range.select();
-//    } else if ($.browser.mozilla || $.browser.opera) {
-//        var selection = window.getSelection();
-//        var range = document.createRange();
-//        range.selectNodeContents(text);
-//        selection.removeAllRanges();
-//        selection.addRange(range);
-//    } else if ($.browser.safari) {
-//        var selection = window.getSelection();
-//        selection.setBaseAndExtent(text, 0, text, 1);
-//    }
-//}
+function updateLegend(){
+    var legend = document.getElementById('legend');
+    while (legend.firstChild) {
+        legend.removeChild(legend.firstChild);
+    }
+    for(var i = 0; i < DRONES.length; i++){
+        var div = document.createElement('div');
+        var color = DRONES[i].fields.color;
+        var name = DRONES[i].fields.name;
+        div.innerHTML = '<span class="symbol" style="color: ' + color + '">&#9596;</span>  <span class="description">' + name + '</span>';
+        legend.appendChild(div);
+    }
+}
