@@ -5,40 +5,6 @@ var DRONES = [];
 var polylines = [];
 var map;
 var beacon_filter = [];
-var clusters = [];
-
-var cluster_styles =
-    [
-        [{
-            url: 'http://localhost:8000/static/m1.png',
-            width: 40,
-            height: 40,
-            textColor: '#ffffff',
-            textSize: 11
-        }],
-        [{
-            url: 'http://localhost:8000/static/m2.png',
-            height: 40,
-            width: 40,
-            textColor: '#ffffff',
-            textSize: 11
-        }],
-        [{
-            url: 'http://localhost:8000/static/m3.png',
-            height: 40,
-            width: 40,
-            textColor: '#525252',
-            textSize: 11
-        }],
-        [{
-            url: 'http://localhost:8000/static/m4.png',
-            height: 40,
-            width: 40,
-            textColor: '#ffffff',
-            textSize: 11
-        }]
-    ];
-
 clearMarkers();
 
 setInterval(
@@ -64,7 +30,6 @@ function parseSuccess(response) {
     updateDrones(response.drones);
     addDronesPolyline(response.drones_positions);
     addBeaconPoints(response.beacons_positions);
-    createClusters();
 }
 
 
@@ -77,44 +42,6 @@ function median(values) {
         return values[half];
     else
         return (values[half - 1] + values[half]) / 2.0;
-}
-
-function createClusters() {
-    markers.map(function (beacon_markers, i) {
-        if (beacon_filter[i] === true) {
-            var cluster = new MarkerClusterer(
-                map,
-                beacon_markers,
-                {
-                    gridSize: 40,
-                    averageCenter: true,
-                    ignoreHidden: true,
-                    styles: cluster_styles[i === 0 ? 0 : i < 3 ? 1 : i < 6 ? 2 : 3],
-                    visible: false
-                });
-            cluster.setCalculator(function (markers, numStyles) {
-                var rssiSum = 0;
-                var min = 255;
-                var max = 0;
-                var rssiArr = [];
-                for (var i = 0; i < markers.length; i++) {
-                    var rssi = parseInt(markers[i].label.split(" ")[0]);
-                    if (rssi > max) max = rssi;
-                    if (rssi < min) min = rssi;
-                    rssiArr.push(rssi);
-                    rssiSum += rssi;
-                }
-                var med = median(rssiArr);
-                var minor = markers[0].label.split(" ")[1];
-                var major = markers[0].label.split(" ")[2];
-                return {
-                    text: minor + " " + major + " " + markers.length + "<br/>" + max + " " + min + "<br/>" + Math.round(rssiSum / markers.length) + " " + Math.round(med),
-                    index: 0
-                };
-            });
-            clusters[i] = cluster;
-        }
-    });
 }
 
 function updateDrones(drones) {
@@ -322,14 +249,12 @@ function checkboxChanged(event, major, minor) {
 function check(major, minor) {
     var indx = indexInMarkersCollection(major, minor);
     beacon_filter[indx] = false;
-    //clusters[indx].visible = true;
     setMarkersMap(indx, map);
 }
 
 function uncheck(major, minor) {
     var indx = indexInMarkersCollection(major, minor);
     beacon_filter[indx] = true;
-    //clusters[indx].visible = false;
     setMarkersMap(indx, null);
 }
 
