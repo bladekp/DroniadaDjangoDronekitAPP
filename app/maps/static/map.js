@@ -3,6 +3,8 @@ var marker_icon_path = 'M 0, 0 m -' + m_rad + ', 0 a ' + m_rad + ',' + m_rad + '
 var startTime = 0;
 var DRONES = [];
 var polylines = [];
+var map;
+var beacon_filter = [];
 
 var cluster_styles =
     [
@@ -35,6 +37,7 @@ var cluster_styles =
             textSize: 11
         }]
     ];
+
 clearMarkers();
 
 setInterval(
@@ -77,34 +80,36 @@ function median(values) {
 
 function createClusters() {
     markers.map(function (beacon_markers, i) {
-        var cluster = new MarkerClusterer(
-            map,
-            beacon_markers,
-            {
-                gridSize: 40,
-                averageCenter: true,
-                styles: cluster_styles[i === 0 ? 0 : i < 3 ? 1 : i < 6 ? 2 : 3]
+        if (!beacon_filter[i]) {
+            var cluster = new MarkerClusterer(
+                map,
+                beacon_markers,
+                {
+                    gridSize: 40,
+                    averageCenter: true,
+                    styles: cluster_styles[i === 0 ? 0 : i < 3 ? 1 : i < 6 ? 2 : 3]
+                });
+            cluster.setCalculator(function (markers, numStyles) {
+                var rssiSum = 0;
+                var min = 255;
+                var max = 0;
+                var rssiArr = [];
+                for (var i = 0; i < markers.length; i++) {
+                    var rssi = parseInt(markers[i].label.split(" ")[0]);
+                    if (rssi > max) max = rssi;
+                    if (rssi < min) min = rssi;
+                    rssiArr.push(rssi);
+                    rssiSum += rssi;
+                }
+                var med = median(rssiArr);
+                var minor = markers[0].label.split(" ")[1];
+                var major = markers[0].label.split(" ")[2];
+                return {
+                    text: minor + " " + major + " " + markers.length + "<br/>" + max + " " + min + "<br/>" + Math.round(rssiSum / markers.length) + " " + Math.round(med),
+                    index: 0
+                };
             });
-        cluster.setCalculator(function (markers, numStyles) {
-            var rssiSum = 0;
-            var min = 255;
-            var max = 0;
-            var rssiArr = [];
-            for (var i = 0; i < markers.length; i++) {
-                var rssi = parseInt(markers[i].label.split(" ")[0]);
-                if (rssi > max) max = rssi;
-                if (rssi < min) min = rssi;
-                rssiArr.push(rssi);
-                rssiSum += rssi;
-            }
-            var med = median(rssiArr);
-            var minor = markers[0].label.split(" ")[1];
-            var major = markers[0].label.split(" ")[2];
-            return {
-                text: minor + " " + major + " " + markers.length + "<br/>" + max + " " + min + "<br/>" + Math.round(rssiSum / markers.length) + " " + Math.round(med),
-                index: 0
-            };
-        });
+        }
     });
 }
 
@@ -167,19 +172,19 @@ function addBeaconPoints(beacons) {
 }
 
 function addMarkerToInternalCollection(marker, major, minor) {
+    markers[indexInMarkersCollection(major,minor)].push(marker);
+}
+
+function indexInMarkersCollection(major, minor){
     switch (major) {
         case 1:
-            markers[0].push(marker);
-            break;
+            return 0;
         case 2:
-            markers[0 + minor].push(marker);
-            break;
+            return 0 + minor;
         case 3:
-            markers[2 + minor].push(marker);
-            break;
+            return 2 + minor;
         case 4:
-            markers[5 + minor].push(marker);
-            break;
+            return 5 + minor;
     }
 }
 
@@ -286,7 +291,39 @@ function initMap() {
     var legend = document.getElementById('legend');
     map.controls[google.maps.ControlPosition.RIGHT_BOTTOM].push(legend);
 
+    var beacons = document.getElementById('beacons');
+    map.controls[google.maps.ControlPosition.RIGHT_BOTTOM].push(beacons);
+
+    for (var i = 0; i < 10; i++) {
+        var div = document.createElement('div');
+        var color = i === 0 ? "#525252" : i < 3 ? "#2bb128" : i < 6 ? "#fff600" : "#ff0612";
+        var major = i === 0 ? 1 : i < 3 ? 2 : i < 6 ? 3 : 4;
+        var minor = i === 9 ? 4 : ( i === 8 || i === 5 ) ? 3 : ( i === 2 || i === 4 || i === 7) ? 2 : 1;
+        div.innerHTML = '<span class="symbol" style="color: ' + color + '">&#9596;</span>  <span class="description">' + major + "." + minor + '</span><input class="custom-checkbox" type="checkbox" checked="true" onchange="checkboxChanged(event,' + major + ',' + minor+ ');"/>';
+        beacons.appendChild(div);
+    }
+
     area.setMap(map);
+}
+
+function checkboxChanged(event, major, minor){
+    if (event.target.checked) {
+        check(major, minor);
+    } else {
+        uncheck(major, minor);
+    }
+}
+
+function check(major, minor){
+    var indx = indexInMarkersCollection(major, minor);
+    beacon_filter[indx] = false;
+    setMarkersMap(indx , map);
+}
+
+function uncheck(major, minor){
+    var indx = indexInMarkersCollection(major, minor);
+    beacon_filter[indx] = true;
+    setMarkersMap(indx , null);
 }
 
 $(function () {
@@ -306,14 +343,11 @@ $(function () {
     startTime = d.getTime();
 });
 
-
-
 function buttonEvent() {
     for (var i = 0; i < markers.length; i++) {
-        for (var j = 0; j < markers[i].length; i++) {
-            markers[i][j].setMap(null);
-        }
+        setMarkersMap(i, null);
     }
+    clearMarkers();
     for (var i = 0; i < polylines.length; i++) {
         polylines[i].setMap(null);
     }
@@ -326,10 +360,19 @@ function buttonEvent() {
     startTime = dateP.getTime();
 }
 
+function setMarkersMap(i, map){
+    for (var j = 0; j < markers[i].length; j++) {
+        markers[i][j].setMap(map);
+    }
+}
+
 function clearMarkers() {
     markers = [];
+    var beacons = document.getElementById('beacons');
     for (var i = 0; i < 10; i++) {
         markers[i] = [];
+        beacon_filter[i] = false;
+        if(beacons !== null) beacons.childNodes[i].childNodes[3].checked = true;
     }
 }
 
