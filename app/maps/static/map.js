@@ -266,7 +266,6 @@ function initMap() {
                                 longitude +
                             '</span>' +
                          '</div>';
-        console.log(infoWindowHtml);
         infoWindow.setContent(infoWindowHtml);
         infoWindow.setPosition(latLng) ;
 
@@ -352,5 +351,4 @@ function clearSelection(element) {
     var range = document.createRange();
     range.selectNodeContents(text);
     selection.removeAllRanges();
-    //selection.addRange(range);
 }
