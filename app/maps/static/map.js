@@ -3,13 +3,18 @@ var marker_icon_path = 'M 0, 0 m -' + m_rad + ', 0 a ' + m_rad + ',' + m_rad + '
 var startTime = 0;
 var DRONES = [];
 var markers = [];
+var foundBeacons = [];
+var estimations = [];
+var circleMarkers = [];
 var polylines = [];
+
+var NUMBEROFOCCURENCES = 10; //how many occurrences use to estimate position
 
 setInterval(
     function getPoint() {
         $.ajax({
             type: "GET",
-            url: "http://remote.jgwservices.com:8000/map/getData/?StartTime=" + startTime,
+            url: "http://localhost:8000/map/getData/?StartTime=" + startTime,
             dataType: "json",
             success: parseSuccess,
             error: errorHandler
@@ -30,24 +35,24 @@ function parseSuccess(response) {
     addBeaconPoints(response.beacons_positions);
 }
 
-function updateDrones(drones){
+function updateDrones(drones) {
     var found = false;
-    for (var i = 0; i < drones.length; i++){
+    for (var i = 0; i < drones.length; i++) {
         for (var j = 0; j < DRONES.length; j++) {
             if (DRONES[j].pk === drones[i].pk) {
                 found = true;
             }
         }
-        if (!found){
+        if (!found) {
             DRONES.push(drones[i]);
         }
         found = false;
     }
 }
 
-function findDrone(id){
-    for (var i = 0; i < DRONES.length; i++){
-        if( DRONES[i].pk === id) return DRONES[i];
+function findDrone(id) {
+    for (var i = 0; i < DRONES.length; i++) {
+        if (DRONES[i].pk === id) return DRONES[i];
     }
     console.error("Any drone with id " + id + " found.");
 }
@@ -62,7 +67,7 @@ function addDronesPolyline(points) {
             lat: latitude,
             lng: longitude
         };
-        if (typeof lastPoint !== "undefined"){
+        if (typeof lastPoint !== "undefined") {
             addPolyline(lastPoint, drone.fields.last_position, drone.fields.color);
         } else {
             addPoint(latitude, longitude, drone.fields.color, "", drone.fields.name, 1); //add point if just one point (start point)
@@ -71,23 +76,81 @@ function addDronesPolyline(points) {
 }
 
 function addBeaconPoints(beacons) {
+
     for (var i = 0; i < beacons.length; i++) {
         var latitude = beacons[i].fields.latitude;
         var longitude = beacons[i].fields.longitude;
         var altitude = beacons[i].fields.altitude;
-        var scale = (100-beacons[i].fields.altitude)/30;
+        var scale = (100 - beacons[i].fields.altitude) / 30;
         var color = beacons[i].fields.major === 4 ? "red" :
-                    beacons[i].fields.major === 3 ? "yellow" :
-                    beacons[i].fields.major === 2 ? "green" :
+            beacons[i].fields.major === 3 ? "yellow" :
+                beacons[i].fields.major === 2 ? "green" :
                     beacons[i].fields.major === 1 ? "#696969" : "white";
         var label = beacons[i].fields.rssi + " " + beacons[i].fields.minor;
-        if (beacons[i].fields.major > 4 || beacons[i].fields.major < 1){
-            label += " "+ beacons[i].fields.major;
+        if (beacons[i].fields.major > 4 || beacons[i].fields.major < 1) {
+            label += " " + beacons[i].fields.major;
         }
-        var title = Math.round(altitude*100)/100 + " m";
-        addPoint(latitude, longitude, color, label, title , 3.0 );
+        var title = Math.round(altitude * 100) / 100 + " m";
+
+
+        var major = beacons[i].fields.major;
+        var minor = beacons[i].fields.minor;
+        var rssi = beacons[i].fields.rssi;
+        var time = beacons[i].fields.time;
+
+        var betterOcc = 0;
+        var occFound = 0;
+
+        //check how many better results already exists
+        for (var j = 0; j < foundBeacons.length; j++) {
+            if (time < 1497361543486) { //only for tests!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+                if (foundBeacons[j].colors.major === major && foundBeacons[j].colors.minor === minor) {
+                    occFound++;
+                    if (foundBeacons[j].rssi < rssi) {
+                        betterOcc++;
+                    }
+                }
+
+            }
+        }
+
+        //delete result if there is already too many of them
+        if (occFound >= NUMBEROFOCCURENCES) {
+            var indexToDelete = rssiMax(foundBeacons,major,minor);
+            markers[indexToDelete].setMap(null);
+            markers.splice(indexToDelete, 1);
+            circleMarkers[indexToDelete].setMap(null);
+            circleMarkers.splice(indexToDelete, 1);
+            foundBeacons.splice(indexToDelete, 1);
+        }
+
+        //add new better result
+        if (time < 1497361543486) { //only for tests!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+            if (betterOcc < NUMBEROFOCCURENCES) {
+                addPoint(latitude, longitude, color, label, title, 1.0); //changed point size, eventually points wont be displayed
+                addFoundBeacon(latitude, longitude, major, minor, rssi, altitude);
+                addBeaconCircle(latitude, longitude, getApproxDistance(rssi), color);
+            }
+        }
+
+
     }
 }
+
+//function to evaluate index of result with worst rssi signal among already found for specific beacon
+function rssiMax(arr, major,minor) {
+    var len = arr.length;
+    var max = -Infinity;
+    var index;
+    while (len--) {
+        if (arr[len].rssi > max && arr[len].colors.major ===major &&arr[len].colors.minor ===minor) {
+            max = arr[len].rssi;
+            index = len;
+        }
+    }
+    return index;
+};
 
 function addPoint(latitude, longitude, color, label, title, scale) {
     var marker = new google.maps.Marker({
@@ -104,19 +167,47 @@ function addPoint(latitude, longitude, color, label, title, scale) {
         title: title
     });
     markers.push(marker);
+
 }
 
-function addPolyline(p1, p2, color){
+//this function adds new beacon to container of acceptable results
+function addFoundBeacon(latitude, longitude, major, minor, rssi, altitude) {
+    var foundBeacon = {
+        position: {lat: latitude, lng: longitude},
+        colors: {major: major, minor: minor},
+        rssi: rssi,
+        altitude: altitude
+    };
+    foundBeacons.push(foundBeacon);
+}
+
+//this function add circle around acceptable result
+function addBeaconCircle(latitude, longitude, radius, color) {
+    var cityCircle = new google.maps.Circle({
+        strokeColor: color,
+        strokeOpacity: 0.8,
+        strokeWeight: 1,
+        fillColor: '#FFFFF',
+        fillOpacity: 0.0,
+        map: map,
+        center: {lat: latitude, lng: longitude},
+        radius: radius
+    });
+    circleMarkers.push(cityCircle);
+}
+
+
+function addPolyline(p1, p2, color) {
     var polyline = new google.maps.Polyline({
-          path: [
-              p1,
-              p2
-          ],
-          map: map,
-          geodesic: true,
-          strokeColor: color,
-          strokeOpacity: 1.0,
-          strokeWeight: 2
+        path: [
+            p1,
+            p2
+        ],
+        map: map,
+        geodesic: true,
+        strokeColor: color,
+        strokeOpacity: 1.0,
+        strokeWeight: 2
     });
     polylines.push(polyline);
 }
@@ -178,18 +269,56 @@ $(function () {
 
 function buttonEvent() {
     for (var i = 0; i < markers.length; i++) {
-          markers[i].setMap(null);
+        markers[i].setMap(null);
     }
     for (var i = 0; i < polylines.length; i++) {
-          polylines[i].setMap(null);
+        polylines[i].setMap(null);
     }
     markers = [];
+    foundBeacons = [];
+    estimations = [];
     polylines = [];
+    circleMarkers = [];
     var date = $("#datetimepicker1").find("input").val();
     var parts = date.split(".");
     var tail = parts[2].split(" ");
     var hours = tail[1].split(":");
     var dateP = new Date(tail[0], parts[1] - 1, parts[0], hours[0], hours[1]);
     startTime = dateP.getTime();
+}
+
+
+//this function returns approximated distance from beacon
+function getApproxDistance(rssi) {
+
+    //TODO:
+    // This formula can be used after calculating proper values
+    // var A = 0;
+    // var B = 0;
+    // var C = 0;
+    // var R = 59;
+    //
+
+    //this formula uses power regression for RSSI signal
+    // check out info:
+    // https://altbeacon.github.io/android-beacon-library/distance-calculations.html
+    // https://altbeacon.github.io/android-beacon-library/distance-calculations2.html
+    // var D = A*Math.pow((rssi/R),B)+C;
+    // return D;
+
+
+
+    //Temporary hardcoded values:
+    var X1 = 58;
+    var Y1 = 10;
+    var X2 = 102;
+    var Y2 = 35;
+
+    //linear approximation:
+    var a = (Y2 - Y1) / (X2 - X1);
+    var b = Y2 - a * X2;
+
+    return a * rssi + b;
+
 }
 
