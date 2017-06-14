@@ -2,12 +2,14 @@ var m_rad = 5;
 var marker_icon_path = 'M 0, 0 m -' + m_rad + ', 0 a ' + m_rad + ',' + m_rad + ' 0 1,0 ' + 2 * m_rad + ',0 a ' + m_rad + ',' + m_rad + ' 0 1,0 -' + 2 * m_rad + ',0';
 var startTime = 0;
 var DRONES = [];
-var markers = [];
 var foundBeacons = [];
 var allBeacons = [];
 var estimations = [];
 var circleMarkers = [];
 var polylines = [];
+var map;
+var beacon_filter = [];
+clearMarkers();
 
 var majors = [1, 2, 3, 4];
 var minors = [1, 2, 3, 4];
@@ -36,10 +38,11 @@ function errorHandler(response, options, error) {
 function parseSuccess(response) {
     startTime = response.current_time;
     updateDrones(response.drones);
-    // addDronesPolyline(response.drones_positions);
+    addDronesPolyline(response.drones_positions);
     addBeaconPoints(response.beacons_positions);
     estimatePosistion();
 }
+
 
 function updateDrones(drones) {
     var found = false;
@@ -54,6 +57,7 @@ function updateDrones(drones) {
         }
         found = false;
     }
+    updateLegend();
 }
 
 function findDrone(id) {
@@ -87,22 +91,19 @@ function addBeaconPoints(beacons) {
         var latitude = beacons[i].fields.latitude;
         var longitude = beacons[i].fields.longitude;
         var altitude = beacons[i].fields.altitude;
-        var scale = (100 - beacons[i].fields.altitude) / 30;
-        var color = beacons[i].fields.major === 4 ? "red" :
-            beacons[i].fields.major === 3 ? "yellow" :
-                beacons[i].fields.major === 2 ? "green" :
-                    beacons[i].fields.major === 1 ? "#696969" : "white";
-        var label = beacons[i].fields.rssi + " " + beacons[i].fields.minor;
-        if (beacons[i].fields.major > 4 || beacons[i].fields.major < 1) {
-            label += " " + beacons[i].fields.major;
-        }
-        var title = Math.round(altitude * 100) / 100 + " m";
-
-
         var major = beacons[i].fields.major;
         var minor = beacons[i].fields.minor;
         var rssi = beacons[i].fields.rssi;
         var time = beacons[i].fields.time;
+        var color = major === 4 ? "red" :
+            major === 3 ? "yellow" :
+                major === 2 ? "green" :
+                    major === 1 ? "#696969" : "white";
+
+        var label = beacons[i].fields.rssi + " " + beacons[i].fields.minor;
+
+
+        var title = Math.round(altitude * 100) / 100 + " m";
 
         var betterOcc = 0;
         var occFound = 0;
@@ -134,7 +135,8 @@ function addBeaconPoints(beacons) {
         //add new better result
         if (time < 1497361543486) { //only for tests!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
             if (betterOcc < NUMBEROFOCCURENCES) {
-                addPoint(latitude, longitude, color, label, title, 1.0); //changed point size, eventually points wont be displayed
+                var marker = addPoint(latitude, longitude, color, label, title, 3.0);
+                addMarkerToInternalCollection(marker, beacons[i].fields.major, beacons[i].fields.minor);
                 addFoundBeacon(latitude, longitude, major, minor, rssi, altitude);
                 addBeaconCircle(latitude, longitude, getApproxDistance(rssi), color);
             }
@@ -199,10 +201,10 @@ function estimatePosistion() {
 
     //compute potentialPositions
 
-    for (i = 0 ; i < bicons.length;i++){
-        for (j = 0 ; j < bicons[i].length ; j++){
+    for (i = 0; i < bicons.length; i++) {
+        for (j = 0; j < bicons[i].length; j++) {
             for (k = 0; k < bicons[i].length; k++) {
-                if(j!==k){
+                if (j !== k) {
 
                 }
             }
@@ -240,8 +242,26 @@ function rssiMax(arr, major, minor) {
     return index;
 }
 
+function addMarkerToInternalCollection(marker, major, minor) {
+    markers[indexInMarkersCollection(major, minor)].push(marker);
+}
+
+function indexInMarkersCollection(major, minor) {
+    switch (major) {
+        case 1:
+            return 0;
+        case 2:
+            return 0 + minor;
+        case 3:
+            return 2 + minor;
+        case 4:
+            return 5 + minor;
+    }
+    return index;
+}
+
 function addPoint(latitude, longitude, color, label, title, scale) {
-    var marker = new google.maps.Marker({
+    return new google.maps.Marker({
         position: {lat: latitude, lng: longitude},
         map: map,
         icon: {
@@ -254,8 +274,6 @@ function addPoint(latitude, longitude, color, label, title, scale) {
         label: label,
         title: title
     });
-    markers.push(marker);
-
 }
 
 //this function adds new beacon to container of acceptable results
@@ -295,7 +313,6 @@ function addBeaconCircle(latitude, longitude, radius, color) {
     circleMarkers.push(cityCircle);
 }
 
-
 function addPolyline(p1, p2, color) {
     var polyline = new google.maps.Polyline({
         path: [
@@ -321,6 +338,7 @@ function initMap() {
         mapTypeId: 'satellite'
     });
 
+
     /* north-west corner, clockwise direction */
     var areaCoords = [
         {lat: 50.0931667, lng: 20.1916000},
@@ -345,7 +363,77 @@ function initMap() {
         fillOpacity: 0.2
     });
 
+    var infoWindow = new google.maps.InfoWindow({
+        pixelOffset: new google.maps.Size(0, 0)
+    });
+
+    function popup(event) {
+        var latitude = event.latLng.lat();
+        var longitude = event.latLng.lng();
+        var latLng = event.latLng;
+
+        infoWindowHtml = '<div id="iw-text">' +
+            '<span id="lat" class="coord">' +
+            latitude +
+            '</span>' + ', ' +
+            '<span id="lng" class="coord">' +
+            longitude +
+            '</span>' +
+            '</div>';
+        infoWindow.setContent(infoWindowHtml);
+        infoWindow.setPosition(latLng);
+
+        infoWindow.open(map);
+        selectText('iw-text');
+        document.execCommand('copy');
+        clearSelection('iw-text');
+        $('#lat').click({elementId: 'lat'}, copyElementText);
+        $('#lng').click({elementId: 'lng'}, copyElementText);
+
+    }
+
+    //Add listener
+    google.maps.event.addListener(map, "click", popup); //end addListener
+
+    //Add listener
+    google.maps.event.addListener(area, "click", popup); //end addListener
+
+    var legend = document.getElementById('legend');
+    map.controls[google.maps.ControlPosition.RIGHT_BOTTOM].push(legend);
+
+    var beacons = document.getElementById('beacons');
+    map.controls[google.maps.ControlPosition.RIGHT_BOTTOM].push(beacons);
+
+    for (var i = 0; i < 10; i++) {
+        var div = document.createElement('div');
+        var color = i === 0 ? "#525252" : i < 3 ? "#2bb128" : i < 6 ? "#fff600" : "#ff0612";
+        var major = i === 0 ? 1 : i < 3 ? 2 : i < 6 ? 3 : 4;
+        var minor = i === 9 ? 4 : ( i === 8 || i === 5 ) ? 3 : ( i === 2 || i === 4 || i === 7) ? 2 : 1;
+        div.innerHTML = '<span class="symbol" style="color: ' + color + '">&#9596;</span>  <span class="description">' + major + "." + minor + '</span><input class="custom-checkbox" type="checkbox" checked="true" onchange="checkboxChanged(event,' + major + ',' + minor + ');"/>';
+        beacons.appendChild(div);
+    }
+
     area.setMap(map);
+}
+
+function checkboxChanged(event, major, minor) {
+    if (event.target.checked) {
+        check(major, minor);
+    } else {
+        uncheck(major, minor);
+    }
+}
+
+function check(major, minor) {
+    var indx = indexInMarkersCollection(major, minor);
+    beacon_filter[indx] = false;
+    setMarkersMap(indx, map);
+}
+
+function uncheck(major, minor) {
+    var indx = indexInMarkersCollection(major, minor);
+    beacon_filter[indx] = true;
+    setMarkersMap(indx, null);
 }
 
 $(function () {
@@ -365,15 +453,14 @@ $(function () {
     startTime = d.getTime();
 });
 
-
 function buttonEvent() {
     for (var i = 0; i < markers.length; i++) {
-        markers[i].setMap(null);
+        setMarkersMap(i, null);
     }
+    clearMarkers();
     for (var i = 0; i < polylines.length; i++) {
         polylines[i].setMap(null);
     }
-    markers = [];
     foundBeacons = [];
     estimations = [];
     polylines = [];
@@ -385,7 +472,6 @@ function buttonEvent() {
     var dateP = new Date(tail[0], parts[1] - 1, parts[0], hours[0], hours[1]);
     startTime = dateP.getTime();
 }
-
 
 //this function returns approximated distance from beacon
 function getApproxDistance(rssi) {
@@ -420,3 +506,56 @@ function getApproxDistance(rssi) {
 
 }
 
+function setMarkersMap(i, map) {
+   for (var j = 0; j < markers[i].length; j++) {
+        markers[i][j].setMap(map);
+        markers[i][j].visible = (map !== null);
+   }
+}
+
+function clearMarkers() {
+    markers = [];
+    var beacons = document.getElementById('beacons');
+    for (var i = 0; i < 10; i++) {
+        markers[i] = [];
+        beacon_filter[i] = false;
+        if (beacons !== null) beacons.childNodes[i].childNodes[3].checked = true;
+    }
+}
+
+function copyElementText(event) {
+    selectText(event.data.elementId);
+    document.execCommand('copy');
+    clearSelection(event.data.elementId);
+}
+
+function selectText(element) {
+    var text = document.getElementById(element);
+    var selection = window.getSelection();
+    var range = document.createRange();
+    range.selectNodeContents(text);
+    selection.removeAllRanges();
+    selection.addRange(range);
+}
+
+function clearSelection(element) {
+    var text = document.getElementById(element);
+    var selection = window.getSelection();
+    var range = document.createRange();
+    range.selectNodeContents(text);
+    selection.removeAllRanges();
+}
+
+function updateLegend() {
+    var legend = document.getElementById('legend');
+    while (legend.firstChild) {
+        legend.removeChild(legend.firstChild);
+    }
+    for (var i = 0; i < DRONES.length; i++) {
+        var div = document.createElement('div');
+        var color = DRONES[i].fields.color;
+        var name = DRONES[i].fields.name;
+        div.innerHTML = '<span class="symbol" style="color: ' + color + '">&#9596;</span>  <span class="description">' + name + '</span>';
+        legend.appendChild(div);
+    }
+}
