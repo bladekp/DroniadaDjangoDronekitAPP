@@ -2,17 +2,12 @@ var m_rad = 5;
 var marker_icon_path = 'M 0, 0 m -' + m_rad + ', 0 a ' + m_rad + ',' + m_rad + ' 0 1,0 ' + 2 * m_rad + ',0 a ' + m_rad + ',' + m_rad + ' 0 1,0 -' + 2 * m_rad + ',0';
 var startTime = 0;
 var DRONES = [];
-var foundBeacons = [];
-var allBeacons = [];
+var markers = [];
 var estimations = [];
-var circleMarkers = [];
 var polylines = [];
 var map;
 var beacon_filter = [];
 clearMarkers();
-
-var majors = [1, 2, 3, 4];
-var minors = [1, 2, 3, 4];
 
 
 var NUMBEROFOCCURENCES = 20; //how many occurrences use to estimate position
@@ -38,9 +33,9 @@ function errorHandler(response, options, error) {
 function parseSuccess(response) {
     startTime = response.current_time;
     updateDrones(response.drones);
-    addDronesPolyline(response.drones_positions);
+    // addDronesPolyline(response.drones_positions);
     addBeaconPoints(response.beacons_positions);
-    estimatePosistion();
+    // estimatePosistion();
 }
 
 
@@ -105,41 +100,24 @@ function addBeaconPoints(beacons) {
 
         var title = Math.round(altitude * 100) / 100 + " m";
 
-        var betterOcc = 0;
-        var occFound = 0;
-
         //check how many better results already exists
-        for (var j = 0; j < foundBeacons.length; j++) {
-            if (time < 1497361543486) { //only for tests!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+        var occs = resultsCount(major,minor,rssi);
 
-                if (foundBeacons[j].colors.major === major && foundBeacons[j].colors.minor === minor) {
-                    occFound++;
-                    if (foundBeacons[j].rssi < rssi) {
-                        betterOcc++;
-                    }
-                }
-
-            }
-        }
 
         //delete result if there is already too many of them
-        if (occFound >= NUMBEROFOCCURENCES) {
-            var indexToDelete = rssiMax(foundBeacons, major, minor);
-            markers[indexToDelete].setMap(null);
-            markers.splice(indexToDelete, 1);
-            circleMarkers[indexToDelete].setMap(null);
-            circleMarkers.splice(indexToDelete, 1);
-            foundBeacons.splice(indexToDelete, 1);
+        if (occs.occFound >= NUMBEROFOCCURENCES) {
+            var indexToDelete = rssiMax(major, minor);
+            setMarkerMap(indexInMarkersCollection(major, minor), indexToDelete, null);
+            setCircleMap(indexInMarkersCollection(major, minor), indexToDelete, null);
+            markers[indexInMarkersCollection(major, minor)].splice(indexToDelete, 1);
         }
 
         //add new better result
-        if (time < 1497361543486) { //only for tests!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-            if (betterOcc < NUMBEROFOCCURENCES) {
-                var marker = addPoint(latitude, longitude, color, label, title, 3.0);
-                addMarkerToInternalCollection(marker, beacons[i].fields.major, beacons[i].fields.minor);
-                addFoundBeacon(latitude, longitude, major, minor, rssi, altitude);
-                addBeaconCircle(latitude, longitude, getApproxDistance(rssi), color);
-            }
+        if (occs.betterOcc < NUMBEROFOCCURENCES) {
+            var marker = addPoint(latitude, longitude, color, label, title, 3.0);
+            var circle = addPointCircle(latitude, longitude, getApproxDistance(rssi), color);
+            var beacon = addFoundBeacon(latitude, longitude, major, minor, rssi, altitude);
+            addMarkerToInternalCollection(marker, circle, beacon, beacons[i].fields.major, beacons[i].fields.minor);
         }
 
 
@@ -213,6 +191,24 @@ function estimatePosistion() {
 
 }
 
+function resultsCount(major, minor, rssi) {
+    var occFound = 0;
+    var betterOcc = 0;
+
+    for (var j = 0; j < markers.length; j++) {
+        for (var k = 0; k < markers[j].length; k++) {
+            if (markers[j][k].beacon.colors.major === major && markers[j][k].beacon.colors.minor === minor) {
+                occFound++;
+                if (markers[j][k].beacon.rssi < rssi) {
+                    betterOcc++;
+                }
+            }
+        }
+    }
+
+    return {occFound:occFound,betterOcc:betterOcc}
+}
+
 var rad = function (x) {
     return x * Math.PI / 180;
 };
@@ -229,21 +225,20 @@ var getDistance = function (p1, p2) {
 };
 
 //function to evaluate index of result with worst rssi signal among already found for specific beacon
-function rssiMax(arr, major, minor) {
-    var len = arr.length;
+function rssiMax(major, minor) {
     var max = -Infinity;
     var index;
-    while (len--) {
-        if (arr[len].rssi > max && arr[len].colors.major === major && arr[len].colors.minor === minor) {
-            max = arr[len].rssi;
-            index = len;
+    for (var i = 0; i < markers[indexInMarkersCollection(major, minor)].length; i++) {
+        if (markers[indexInMarkersCollection(major, minor)][i].beacon.rssi > max) {
+            max = markers[indexInMarkersCollection(major, minor)][i].beacon.rssi;
+            index = i;
         }
     }
     return index;
 }
 
-function addMarkerToInternalCollection(marker, major, minor) {
-    markers[indexInMarkersCollection(major, minor)].push(marker);
+function addMarkerToInternalCollection(marker, circle, beacon, major, minor) {
+    markers[indexInMarkersCollection(major, minor)].push({marker: marker, circle: circle, beacon: beacon});
 }
 
 function indexInMarkersCollection(major, minor) {
@@ -272,35 +267,14 @@ function addPoint(latitude, longitude, color, label, title, scale) {
             scale: scale
         },
         label: label,
-        title: title
+        title: title,
+        clickable: false
     });
 }
 
-//this function adds new beacon to container of acceptable results
-function addFoundBeacon(latitude, longitude, major, minor, rssi, altitude) {
-    var foundBeacon = {
-        position: {lat: latitude, lng: longitude},
-        colors: {major: major, minor: minor},
-        rssi: rssi,
-        altitude: altitude
-    };
-    foundBeacons.push(foundBeacon);
-}
-
-//this function adds all new beacons
-function addFoundBeaconToAll(latitude, longitude, major, minor, rssi, altitude) {
-    var beacon = {
-        position: {lat: latitude, lng: longitude},
-        colors: {major: major, minor: minor},
-        rssi: rssi,
-        altitude: altitude
-    };
-    allBeacons.push(beacon);
-}
-
 //this function add circle around acceptable result
-function addBeaconCircle(latitude, longitude, radius, color) {
-    var cityCircle = new google.maps.Circle({
+function addPointCircle(latitude, longitude, radius, color) {
+    return new google.maps.Circle({
         strokeColor: color,
         strokeOpacity: 0.8,
         strokeWeight: 1,
@@ -308,9 +282,19 @@ function addBeaconCircle(latitude, longitude, radius, color) {
         fillOpacity: 0.0,
         map: map,
         center: {lat: latitude, lng: longitude},
-        radius: radius
+        radius: radius,
+        clickable: false
     });
-    circleMarkers.push(cityCircle);
+}
+
+//this function adds new beacon to container of acceptable results
+function addFoundBeacon(latitude, longitude, major, minor, rssi, altitude) {
+    return {
+        position: {lat: latitude, lng: longitude},
+        colors: {major: major, minor: minor},
+        rssi: rssi,
+        altitude: altitude
+    };
 }
 
 function addPolyline(p1, p2, color) {
@@ -428,12 +412,15 @@ function check(major, minor) {
     var indx = indexInMarkersCollection(major, minor);
     beacon_filter[indx] = false;
     setMarkersMap(indx, map);
+    setCirclesMap(indx, map);
 }
 
 function uncheck(major, minor) {
     var indx = indexInMarkersCollection(major, minor);
     beacon_filter[indx] = true;
     setMarkersMap(indx, null);
+    setCirclesMap(indx, null);
+
 }
 
 $(function () {
@@ -456,15 +443,14 @@ $(function () {
 function buttonEvent() {
     for (var i = 0; i < markers.length; i++) {
         setMarkersMap(i, null);
+        setCirclesMap(i, null);
     }
     clearMarkers();
     for (var i = 0; i < polylines.length; i++) {
         polylines[i].setMap(null);
     }
-    foundBeacons = [];
     estimations = [];
     polylines = [];
-    circleMarkers = [];
     var date = $("#datetimepicker1").find("input").val();
     var parts = date.split(".");
     var tail = parts[2].split(" ");
@@ -507,14 +493,28 @@ function getApproxDistance(rssi) {
 }
 
 function setMarkersMap(i, map) {
-   for (var j = 0; j < markers[i].length; j++) {
-        markers[i][j].setMap(map);
-        markers[i][j].visible = (map !== null);
-   }
+    for (var j = 0; j < markers[i].length; j++) {
+        setMarkerMap(i, j, map);
+    }
+}
+
+function setMarkerMap(i, j, map) {
+    markers[i][j].marker.setMap(map);
+    markers[i][j].marker.visible = (map !== null);
+}
+
+function setCirclesMap(i, map) {
+    for (var j = 0; j < markers[i].length; j++) {
+        setCircleMap(i, j, map);
+    }
+}
+
+function setCircleMap(i, j, map) {
+    markers[i][j].circle.setMap(map);
+    // markers[i][j].circle.visible = (map !== null);
 }
 
 function clearMarkers() {
-    markers = [];
     var beacons = document.getElementById('beacons');
     for (var i = 0; i < 10; i++) {
         markers[i] = [];
