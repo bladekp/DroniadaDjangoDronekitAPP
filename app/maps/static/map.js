@@ -255,7 +255,6 @@ function initMap() {
     function popup(event) {
         var latitude = event.latLng.lat();
         var longitude = event.latLng.lng();
-        console.log( latitude + ', ' + longitude );
         var latLng = event.latLng;
 
         infoWindowHtml ='<div id="iw-text">' +
