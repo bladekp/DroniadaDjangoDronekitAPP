@@ -86,9 +86,11 @@ function addDronesPolyline(points) {
 }
 
 function addBeaconPoints(beacons) {
+    pointsArray.length = 0
     for (var i = 0; i < beacons.length; i++) {
         var latitude = beacons[i].fields.latitude;
         var longitude = beacons[i].fields.longitude;
+
         var altitude = beacons[i].fields.altitude;
         var scale = (100 - beacons[i].fields.altitude) / 30;
         var color = beacons[i].fields.major === 4 ? "red" :
@@ -99,6 +101,7 @@ function addBeaconPoints(beacons) {
         var title = Math.round(altitude * 100) / 100 + " m";
         var marker = addPoint(latitude, longitude, color, label, title, 3.0);
         addMarkerToInternalCollection(marker, beacons[i].fields.major, beacons[i].fields.minor);
+        pointsArray.push(new google.maps.LatLng(latitude, longitude));
     }
 }
 
@@ -225,6 +228,13 @@ function initMap() {
 
     var beacons = document.getElementById('beacons');
     map.controls[google.maps.ControlPosition.RIGHT_BOTTOM].push(beacons);
+
+    pointsArray = new google.maps.MVCArray();
+    heatmap = new google.maps.visualization.HeatmapLayer({
+        data:pointsArray,
+        map: map,
+    });
+
 
     for (var i = 0; i < 10; i++) {
         var div = document.createElement('div');
