@@ -2,14 +2,46 @@ var m_rad = 5;
 var marker_icon_path = 'M 0, 0 m -' + m_rad + ', 0 a ' + m_rad + ',' + m_rad + ' 0 1,0 ' + 2 * m_rad + ',0 a ' + m_rad + ',' + m_rad + ' 0 1,0 -' + 2 * m_rad + ',0';
 var startTime = 0;
 var DRONES = [];
-var markers = [];
 var polylines = [];
+
+var cluster_styles =
+    [
+        [{
+            url: 'http://localhost:8000/static/m1.png',
+            width: 40,
+            height: 40,
+            textColor: '#ffffff',
+            textSize: 11
+        }],
+        [{
+            url: 'http://localhost:8000/static/m2.png',
+            height: 40,
+            width: 40,
+            textColor: '#ffffff',
+            textSize: 11
+        }],
+        [{
+            url: 'http://localhost:8000/static/m3.png',
+            height: 40,
+            width: 40,
+            textColor: '#525252',
+            textSize: 11
+        }],
+        [{
+            url: 'http://localhost:8000/static/m4.png',
+            height: 40,
+            width: 40,
+            textColor: '#ffffff',
+            textSize: 11
+        }]
+    ];
+clearMarkers();
 
 setInterval(
     function getPoint() {
         $.ajax({
             type: "GET",
-            url: "http://remote.jgwservices.com:8000/map/getData/?StartTime=" + startTime,
+            url: "http://localhost:8000/map/getData/?StartTime=" + startTime,
             dataType: "json",
             success: parseSuccess,
             error: errorHandler
@@ -28,26 +60,71 @@ function parseSuccess(response) {
     updateDrones(response.drones);
     addDronesPolyline(response.drones_positions);
     addBeaconPoints(response.beacons_positions);
+    createClusters();
 }
 
-function updateDrones(drones){
+
+function median(values) {
+    values.sort(function (a, b) {
+        return a - b;
+    });
+    var half = Math.floor(values.length / 2);
+    if (values.length % 2)
+        return values[half];
+    else
+        return (values[half - 1] + values[half]) / 2.0;
+}
+
+function createClusters() {
+    markers.map(function (beacon_markers, i) {
+        var cluster = new MarkerClusterer(
+            map,
+            beacon_markers,
+            {
+                gridSize: 40,
+                averageCenter: true,
+                styles: cluster_styles[i === 0 ? 0 : i < 3 ? 1 : i < 6 ? 2 : 3]
+            });
+        cluster.setCalculator(function (markers, numStyles) {
+            var rssiSum = 0;
+            var min = 255;
+            var max = 0;
+            var rssiArr = [];
+            for (var i = 0; i < markers.length; i++) {
+                var rssi = parseInt(markers[i].label.split(" ")[0]);
+                if (rssi > max) max = rssi;
+                if (rssi < min) min = rssi;
+                rssiArr.push(rssi);
+                rssiSum += rssi;
+            }
+            var med = median(rssiArr);
+            var minor = markers[0].label.split(" ")[1];
+            return {
+                text: minor + " " + markers.length + "<br/>" + max + " " + min + "<br/>" + Math.round(rssiSum / markers.length) + " " + Math.round(med),
+                index: 0
+            };
+        });
+    });
+}
+
+function updateDrones(drones) {
     var found = false;
-    for (var i = 0; i < drones.length; i++){
+    for (var i = 0; i < drones.length; i++) {
         for (var j = 0; j < DRONES.length; j++) {
             if (DRONES[j].pk === drones[i].pk) {
                 found = true;
             }
         }
-        if (!found){
+        if (!found) {
             DRONES.push(drones[i]);
         }
         found = false;
     }
 }
 
-function findDrone(id){
-    for (var i = 0; i < DRONES.length; i++){
-        if( DRONES[i].pk === id) return DRONES[i];
+function findDrone(id) {
+    for (var i = 0; i < DRONES.length; i++) {
+        if (DRONES[i].pk === id) return DRONES[i];
     }
     console.error("Any drone with id " + id + " found.");
 }
@@ -62,7 +139,7 @@ function addDronesPolyline(points) {
             lat: latitude,
             lng: longitude
         };
-        if (typeof lastPoint !== "undefined"){
+        if (typeof lastPoint !== "undefined") {
             addPolyline(lastPoint, drone.fields.last_position, drone.fields.color);
         } else {
             addPoint(latitude, longitude, drone.fields.color, "", drone.fields.name, 1); //add point if just one point (start point)
@@ -75,22 +152,40 @@ function addBeaconPoints(beacons) {
         var latitude = beacons[i].fields.latitude;
         var longitude = beacons[i].fields.longitude;
         var altitude = beacons[i].fields.altitude;
-        var scale = (100-beacons[i].fields.altitude)/30;
+        var scale = (100 - beacons[i].fields.altitude) / 30;
         var color = beacons[i].fields.major === 4 ? "red" :
-                    beacons[i].fields.major === 3 ? "yellow" :
-                    beacons[i].fields.major === 2 ? "green" :
+            beacons[i].fields.major === 3 ? "yellow" :
+                beacons[i].fields.major === 2 ? "green" :
                     beacons[i].fields.major === 1 ? "#696969" : "white";
         var label = beacons[i].fields.rssi + " " + beacons[i].fields.minor;
-        if (beacons[i].fields.major > 4 || beacons[i].fields.major < 1){
-            label += " "+ beacons[i].fields.major;
+        if (beacons[i].fields.major > 4 || beacons[i].fields.major < 1) {
+            label += " " + beacons[i].fields.major;
         }
-        var title = Math.round(altitude*100)/100 + " m";
-        addPoint(latitude, longitude, color, label, title , 3.0 );
+        var title = Math.round(altitude * 100) / 100 + " m";
+        var marker = addPoint(latitude, longitude, color, label, title, 3.0);
+        addMarkerToInternalCollection(marker, beacons[i].fields.major, beacons[i].fields.minor);
+    }
+}
+
+function addMarkerToInternalCollection(marker, major, minor) {
+    switch (major) {
+        case 1:
+            markers[0].push(marker);
+            break;
+        case 2:
+            markers[0 + minor].push(marker);
+            break;
+        case 3:
+            markers[2 + minor].push(marker);
+            break;
+        case 4:
+            markers[5 + minor].push(marker);
+            break;
     }
 }
 
 function addPoint(latitude, longitude, color, label, title, scale) {
-    var marker = new google.maps.Marker({
+    return new google.maps.Marker({
         position: {lat: latitude, lng: longitude},
         map: map,
         icon: {
@@ -103,20 +198,19 @@ function addPoint(latitude, longitude, color, label, title, scale) {
         label: label,
         title: title
     });
-    markers.push(marker);
 }
 
-function addPolyline(p1, p2, color){
+function addPolyline(p1, p2, color) {
     var polyline = new google.maps.Polyline({
-          path: [
-              p1,
-              p2
-          ],
-          map: map,
-          geodesic: true,
-          strokeColor: color,
-          strokeOpacity: 1.0,
-          strokeWeight: 2
+        path: [
+            p1,
+            p2
+        ],
+        map: map,
+        geodesic: true,
+        strokeColor: color,
+        strokeOpacity: 1.0,
+        strokeWeight: 2
     });
     polylines.push(polyline);
 }
@@ -178,12 +272,13 @@ $(function () {
 
 function buttonEvent() {
     for (var i = 0; i < markers.length; i++) {
-          markers[i].setMap(null);
+        for (var j = 0; j < markers[i].length; i++) {
+            markers[i][j].setMap(null);
+        }
     }
     for (var i = 0; i < polylines.length; i++) {
-          polylines[i].setMap(null);
+        polylines[i].setMap(null);
     }
-    markers = [];
     polylines = [];
     var date = $("#datetimepicker1").find("input").val();
     var parts = date.split(".");
@@ -191,5 +286,12 @@ function buttonEvent() {
     var hours = tail[1].split(":");
     var dateP = new Date(tail[0], parts[1] - 1, parts[0], hours[0], hours[1]);
     startTime = dateP.getTime();
+}
+
+function clearMarkers() {
+    markers = [];
+    for (var i = 0; i < 10; i++) {
+        markers[i] = [];
+    }
 }
 
