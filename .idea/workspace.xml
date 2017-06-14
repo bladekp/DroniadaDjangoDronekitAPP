@@ -3,6 +3,8 @@
   <component name="ChangeListManager">
     <list default="true" id="4fcd0a71-e5d6-4e7b-9e76-0b111849d353" name="Default" comment="">
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/app/maps/static/map.css" afterPath="$PROJECT_DIR$/app/maps/static/map.css" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/app/maps/static/map.js" afterPath="$PROJECT_DIR$/app/maps/static/map.js" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/app/maps/templates/maps/map.html" afterPath="$PROJECT_DIR$/app/maps/templates/maps/map.html" />
     </list>
     <ignored path="DroniadaDjangoDronekitAPP.iws" />
     <ignored path=".idea/workspace.xml" />
@@ -32,21 +34,21 @@
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="map.js" pinned="false" current-in-tab="false">
+      <file leaf-file-name="map.js" pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/app/maps/static/map.js">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="198">
-              <caret line="184" column="34" selection-start-line="184" selection-start-column="34" selection-end-line="184" selection-end-column="34" />
+            <state relative-caret-position="313">
+              <caret line="176" column="39" selection-start-line="176" selection-start-column="39" selection-end-line="176" selection-end-column="39" />
               <folding />
             </state>
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="map.css" pinned="false" current-in-tab="true">
+      <file leaf-file-name="map.css" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/app/maps/static/map.css">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="391">
-              <caret line="23" column="13" selection-start-line="23" selection-start-column="13" selection-end-line="23" selection-end-column="13" />
+            <state relative-caret-position="603">
+              <caret line="38" column="17" selection-start-line="38" selection-start-column="17" selection-end-line="38" selection-end-column="17" />
               <folding />
             </state>
           </provider>
@@ -55,8 +57,8 @@
       <file leaf-file-name="map.html" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/app/maps/templates/maps/map.html">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="169">
-              <caret line="16" column="64" selection-start-line="16" selection-start-column="64" selection-end-line="16" selection-end-column="64" />
+            <state relative-caret-position="646">
+              <caret line="38" column="21" selection-start-line="38" selection-start-column="21" selection-end-line="38" selection-end-column="21" />
               <folding />
             </state>
           </provider>
@@ -65,8 +67,8 @@
       <file leaf-file-name="views.py" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/app/maps/views.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="112">
-              <caret line="30" column="42" selection-start-line="30" selection-start-column="42" selection-end-line="30" selection-end-column="42" />
+            <state relative-caret-position="163">
+              <caret line="11" column="29" selection-start-line="11" selection-start-column="22" selection-end-line="11" selection-end-column="29" />
               <folding>
                 <element signature="e#0#35#0" expanded="true" />
               </folding>
@@ -116,8 +118,8 @@
         <option value="$PROJECT_DIR$/app/maps/views.py" />
         <option value="$PROJECT_DIR$/app/maps/static/infobox.js" />
         <option value="$PROJECT_DIR$/app/maps/templates/maps/map.html" />
-        <option value="$PROJECT_DIR$/app/maps/static/map.js" />
         <option value="$PROJECT_DIR$/app/maps/static/map.css" />
+        <option value="$PROJECT_DIR$/app/maps/static/map.js" />
       </list>
     </option>
   </component>
@@ -802,8 +804,8 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/app/maps/views.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="112">
-          <caret line="30" column="42" selection-start-line="30" selection-start-column="42" selection-end-line="30" selection-end-column="42" />
+        <state relative-caret-position="163">
+          <caret line="11" column="29" selection-start-line="11" selection-start-column="22" selection-end-line="11" selection-end-column="29" />
           <folding>
             <element signature="e#0#35#0" expanded="true" />
           </folding>
@@ -812,24 +814,24 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/app/maps/templates/maps/map.html">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="169">
-          <caret line="16" column="64" selection-start-line="16" selection-start-column="64" selection-end-line="16" selection-end-column="64" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/app/maps/static/map.js">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="198">
-          <caret line="184" column="34" selection-start-line="184" selection-start-column="34" selection-end-line="184" selection-end-column="34" />
+        <state relative-caret-position="646">
+          <caret line="38" column="21" selection-start-line="38" selection-start-column="21" selection-end-line="38" selection-end-column="21" />
           <folding />
         </state>
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/app/maps/static/map.css">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="391">
-          <caret line="23" column="13" selection-start-line="23" selection-start-column="13" selection-end-line="23" selection-end-column="13" />
+        <state relative-caret-position="603">
+          <caret line="38" column="17" selection-start-line="38" selection-start-column="17" selection-end-line="38" selection-end-column="17" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/app/maps/static/map.js">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="313">
+          <caret line="176" column="39" selection-start-line="176" selection-start-column="39" selection-end-line="176" selection-end-column="39" />
           <folding />
         </state>
       </provider>

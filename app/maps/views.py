@@ -9,7 +9,7 @@ from .models import Beacon
 from .models import Drone
 from .models import DronePosition
 
-COLORS = ["#2875e1", "#23be4a", "#7d220c", "#83c9c0", "#9a8f93", "#d3f0d0"]
+COLORS = ["#2875e1", "#FFA500", "#7d220c", "#ee82ee", "#9a8f93", "#d3f0d0"]
 COLORS_INDX = 0
 
 def render_map(request):
