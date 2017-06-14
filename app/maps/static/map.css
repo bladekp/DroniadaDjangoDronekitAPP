@@ -14,28 +14,47 @@
     cursor: pointer;
 }
 
-.coord:hover{
+.coord:hover {
     color: DarkBlue;
     text-decoration: underline;
 }
 
-.coord:active{
+.coord:active {
     margin: 0px;
     border: 1px solid DodgerBlue
 
 }
 
 #legend {
-        visibility: visible;
-        font-family: Arial, sans-serif;
-        background: #fff;
-        padding: 10px;
-        margin: 10px;
-        border: 3px solid #000;
+    visibility: visible;
+    font-family: Arial, sans-serif;
+    background: #fff;
+    padding: 10px;
+    margin: 10px;
+    border: 3px solid #000;
 }
 
 .symbol {
     font-width: 900;
     font-size: 24px;
     margin-right: 5px;
+}
+
+.container {
+    position: absolute;
+    z-index: 100;
+    left: 200px
+}
+
+.starttime {
+    background-color: azure;
+    padding: 10px;
+}
+
+#datetimepicker1 {
+    float: left;
+}
+
+.acceptbutton {
+    margin-left: 590px;
 }
