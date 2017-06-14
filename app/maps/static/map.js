@@ -99,8 +99,9 @@ function createClusters() {
             }
             var med = median(rssiArr);
             var minor = markers[0].label.split(" ")[1];
+            var major = markers[0].label.split(" ")[2];
             return {
-                text: minor + " " + markers.length + "<br/>" + max + " " + min + "<br/>" + Math.round(rssiSum / markers.length) + " " + Math.round(med),
+                text: minor + " " + major + " " + markers.length + "<br/>" + max + " " + min + "<br/>" + Math.round(rssiSum / markers.length) + " " + Math.round(med),
                 index: 0
             };
         });
@@ -157,10 +158,7 @@ function addBeaconPoints(beacons) {
             beacons[i].fields.major === 3 ? "yellow" :
                 beacons[i].fields.major === 2 ? "green" :
                     beacons[i].fields.major === 1 ? "#696969" : "white";
-        var label = beacons[i].fields.rssi + " " + beacons[i].fields.minor;
-        if (beacons[i].fields.major > 4 || beacons[i].fields.major < 1) {
-            label += " " + beacons[i].fields.major;
-        }
+        var label = beacons[i].fields.rssi + " " + beacons[i].fields.minor + " " + beacons[i].fields.major;
         var title = Math.round(altitude * 100) / 100 + " m";
         var marker = addPoint(latitude, longitude, color, label, title, 3.0);
         addMarkerToInternalCollection(marker, beacons[i].fields.major, beacons[i].fields.minor);
