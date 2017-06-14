@@ -4,11 +4,16 @@ var startTime = 0;
 var DRONES = [];
 var markers = [];
 var foundBeacons = [];
+var allBeacons = [];
 var estimations = [];
 var circleMarkers = [];
 var polylines = [];
 
-var NUMBEROFOCCURENCES = 10; //how many occurrences use to estimate position
+var majors = [1, 2, 3, 4];
+var minors = [1, 2, 3, 4];
+
+
+var NUMBEROFOCCURENCES = 20; //how many occurrences use to estimate position
 
 setInterval(
     function getPoint() {
@@ -31,8 +36,9 @@ function errorHandler(response, options, error) {
 function parseSuccess(response) {
     startTime = response.current_time;
     updateDrones(response.drones);
-    addDronesPolyline(response.drones_positions);
+    // addDronesPolyline(response.drones_positions);
     addBeaconPoints(response.beacons_positions);
+    estimatePosistion();
 }
 
 function updateDrones(drones) {
@@ -117,7 +123,7 @@ function addBeaconPoints(beacons) {
 
         //delete result if there is already too many of them
         if (occFound >= NUMBEROFOCCURENCES) {
-            var indexToDelete = rssiMax(foundBeacons,major,minor);
+            var indexToDelete = rssiMax(foundBeacons, major, minor);
             markers[indexToDelete].setMap(null);
             markers.splice(indexToDelete, 1);
             circleMarkers[indexToDelete].setMap(null);
@@ -138,19 +144,101 @@ function addBeaconPoints(beacons) {
     }
 }
 
+function estimatePosistion() {
+    var bicons = [];
+    var array = [];
+    var i;
+    var j;
+    var k;
+    //populate bicons
+    for (i = 0; i < majors.length; i++) {
+        for (j = 0; j < minors.length; j++) {
+            array = [];
+            for (k = 0; k < foundBeacons.length; k++) {
+                if (foundBeacons[k].colors.major === majors[i] && foundBeacons[k].colors.minor === minors[j]) {
+                    array.push(foundBeacons[k]);
+                }
+            }
+            if (array.length > 0) {
+                bicons.push(array);
+            }
+        }
+    }
+    console.log(bicons[0]);
+    //delete overlaping bicons d < |r0 - r1|
+    for (i = 0; i < bicons.length; i++) {
+
+        for (j = 0; j < bicons[i].length; j++) {
+            for (k = 0; k < bicons[i].length; k++) {
+                if (k !== j) {
+                    var p1 = new google.maps.LatLng({lat: bicons[i][j].position.lat, lng: bicons[i][j].position.lng});
+                    var p2 = new google.maps.LatLng({lat: bicons[i][k].position.lat, lng: bicons[i][k].position.lng});
+                    var d = google.maps.geometry.spherical.computeDistanceBetween(p1, p2);
+
+                    console.log(d);
+
+                    var r0 = getApproxDistance(bicons[i][j].rssi);
+                    var r1 = getApproxDistance(bicons[i][k].rssi);
+
+                    if (d < Math.abs(r0 - r1)) {
+                        if (r0 > r1) {
+                            bicons[i].splice(j, 1);
+                        } else {
+                            bicons[i].splice(k, 1);
+                        }
+                    }
+                }
+
+            }
+        }
+
+
+    }
+
+    var potentialPositions = [];
+
+    //compute potentialPositions
+
+    for (i = 0 ; i < bicons.length;i++){
+        for (j = 0 ; j < bicons[i].length ; j++){
+            for (k = 0; k < bicons[i].length; k++) {
+                if(j!==k){
+
+                }
+            }
+        }
+    }
+
+}
+
+var rad = function (x) {
+    return x * Math.PI / 180;
+};
+
+var getDistance = function (p1, p2) {
+    var R = 6378137; // Earth’s mean radius in meter
+    var dLat = rad(p2.position.lat - p1.position.lat);
+    var dLong = rad(p2.position.lng - p1.position.lng);
+    var a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+        Math.cos(rad(p1.position.lat)) * Math.cos(rad(p2.position.lat)) *
+        Math.sin(dLong / 2) * Math.sin(dLong / 2);
+    var c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    return R * c; // returns the distance in meter
+};
+
 //function to evaluate index of result with worst rssi signal among already found for specific beacon
-function rssiMax(arr, major,minor) {
+function rssiMax(arr, major, minor) {
     var len = arr.length;
     var max = -Infinity;
     var index;
     while (len--) {
-        if (arr[len].rssi > max && arr[len].colors.major ===major &&arr[len].colors.minor ===minor) {
+        if (arr[len].rssi > max && arr[len].colors.major === major && arr[len].colors.minor === minor) {
             max = arr[len].rssi;
             index = len;
         }
     }
     return index;
-};
+}
 
 function addPoint(latitude, longitude, color, label, title, scale) {
     var marker = new google.maps.Marker({
@@ -179,6 +267,17 @@ function addFoundBeacon(latitude, longitude, major, minor, rssi, altitude) {
         altitude: altitude
     };
     foundBeacons.push(foundBeacon);
+}
+
+//this function adds all new beacons
+function addFoundBeaconToAll(latitude, longitude, major, minor, rssi, altitude) {
+    var beacon = {
+        position: {lat: latitude, lng: longitude},
+        colors: {major: major, minor: minor},
+        rssi: rssi,
+        altitude: altitude
+    };
+    allBeacons.push(beacon);
 }
 
 //this function add circle around acceptable result
@@ -305,7 +404,6 @@ function getApproxDistance(rssi) {
     // https://altbeacon.github.io/android-beacon-library/distance-calculations2.html
     // var D = A*Math.pow((rssi/R),B)+C;
     // return D;
-
 
 
     //Temporary hardcoded values:
