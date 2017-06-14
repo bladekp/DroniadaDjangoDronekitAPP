@@ -5,6 +5,7 @@ var DRONES = [];
 var polylines = [];
 var map;
 var beacon_filter = [];
+var clusters = [];
 
 var cluster_styles =
     [
@@ -80,14 +81,16 @@ function median(values) {
 
 function createClusters() {
     markers.map(function (beacon_markers, i) {
-        if (!beacon_filter[i]) {
+        if (beacon_filter[i] === true) {
             var cluster = new MarkerClusterer(
                 map,
                 beacon_markers,
                 {
                     gridSize: 40,
                     averageCenter: true,
-                    styles: cluster_styles[i === 0 ? 0 : i < 3 ? 1 : i < 6 ? 2 : 3]
+                    ignoreHidden: true,
+                    styles: cluster_styles[i === 0 ? 0 : i < 3 ? 1 : i < 6 ? 2 : 3],
+                    visible: false
                 });
             cluster.setCalculator(function (markers, numStyles) {
                 var rssiSum = 0;
@@ -109,6 +112,7 @@ function createClusters() {
                     index: 0
                 };
             });
+            clusters[i] = cluster;
         }
     });
 }
@@ -172,10 +176,10 @@ function addBeaconPoints(beacons) {
 }
 
 function addMarkerToInternalCollection(marker, major, minor) {
-    markers[indexInMarkersCollection(major,minor)].push(marker);
+    markers[indexInMarkersCollection(major, minor)].push(marker);
 }
 
-function indexInMarkersCollection(major, minor){
+function indexInMarkersCollection(major, minor) {
     switch (major) {
         case 1:
             return 0;
@@ -255,7 +259,7 @@ function initMap() {
     });
 
     var infoWindow = new google.maps.InfoWindow({
-        pixelOffset: new google.maps.Size(0,0)
+        pixelOffset: new google.maps.Size(0, 0)
     });
 
     function popup(event) {
@@ -263,25 +267,26 @@ function initMap() {
         var longitude = event.latLng.lng();
         var latLng = event.latLng;
 
-        infoWindowHtml ='<div id="iw-text">' +
-                            '<span id="lat" class="coord">' +
-                                latitude +
-                            '</span>' + ', ' +
-                            '<span id="lng" class="coord">' +
-                                longitude +
-                            '</span>' +
-                         '</div>';
+        infoWindowHtml = '<div id="iw-text">' +
+            '<span id="lat" class="coord">' +
+            latitude +
+            '</span>' + ', ' +
+            '<span id="lng" class="coord">' +
+            longitude +
+            '</span>' +
+            '</div>';
         infoWindow.setContent(infoWindowHtml);
-        infoWindow.setPosition(latLng) ;
+        infoWindow.setPosition(latLng);
 
         infoWindow.open(map);
         selectText('iw-text');
         document.execCommand('copy');
         clearSelection('iw-text');
-        $('#lat').click( { elementId: 'lat'}, copyElementText );
-        $('#lng').click( { elementId: 'lng'}, copyElementText );
+        $('#lat').click({elementId: 'lat'}, copyElementText);
+        $('#lng').click({elementId: 'lng'}, copyElementText);
 
     }
+
     //Add listener
     google.maps.event.addListener(map, "click", popup); //end addListener
 
@@ -299,14 +304,14 @@ function initMap() {
         var color = i === 0 ? "#525252" : i < 3 ? "#2bb128" : i < 6 ? "#fff600" : "#ff0612";
         var major = i === 0 ? 1 : i < 3 ? 2 : i < 6 ? 3 : 4;
         var minor = i === 9 ? 4 : ( i === 8 || i === 5 ) ? 3 : ( i === 2 || i === 4 || i === 7) ? 2 : 1;
-        div.innerHTML = '<span class="symbol" style="color: ' + color + '">&#9596;</span>  <span class="description">' + major + "." + minor + '</span><input class="custom-checkbox" type="checkbox" checked="true" onchange="checkboxChanged(event,' + major + ',' + minor+ ');"/>';
+        div.innerHTML = '<span class="symbol" style="color: ' + color + '">&#9596;</span>  <span class="description">' + major + "." + minor + '</span><input class="custom-checkbox" type="checkbox" checked="true" onchange="checkboxChanged(event,' + major + ',' + minor + ');"/>';
         beacons.appendChild(div);
     }
 
     area.setMap(map);
 }
 
-function checkboxChanged(event, major, minor){
+function checkboxChanged(event, major, minor) {
     if (event.target.checked) {
         check(major, minor);
     } else {
@@ -314,16 +319,18 @@ function checkboxChanged(event, major, minor){
     }
 }
 
-function check(major, minor){
+function check(major, minor) {
     var indx = indexInMarkersCollection(major, minor);
     beacon_filter[indx] = false;
-    setMarkersMap(indx , map);
+    //clusters[indx].visible = true;
+    setMarkersMap(indx, map);
 }
 
-function uncheck(major, minor){
+function uncheck(major, minor) {
     var indx = indexInMarkersCollection(major, minor);
     beacon_filter[indx] = true;
-    setMarkersMap(indx , null);
+    //clusters[indx].visible = false;
+    setMarkersMap(indx, null);
 }
 
 $(function () {
@@ -360,9 +367,10 @@ function buttonEvent() {
     startTime = dateP.getTime();
 }
 
-function setMarkersMap(i, map){
+function setMarkersMap(i, map) {
     for (var j = 0; j < markers[i].length; j++) {
         markers[i][j].setMap(map);
+        markers[i][j].visible = (map !== null);
     }
 }
 
@@ -372,11 +380,11 @@ function clearMarkers() {
     for (var i = 0; i < 10; i++) {
         markers[i] = [];
         beacon_filter[i] = false;
-        if(beacons !== null) beacons.childNodes[i].childNodes[3].checked = true;
+        if (beacons !== null) beacons.childNodes[i].childNodes[3].checked = true;
     }
 }
 
-function copyElementText(event){
+function copyElementText(event) {
     selectText(event.data.elementId);
     document.execCommand('copy');
     clearSelection(event.data.elementId);
@@ -399,12 +407,12 @@ function clearSelection(element) {
     selection.removeAllRanges();
 }
 
-function updateLegend(){
+function updateLegend() {
     var legend = document.getElementById('legend');
     while (legend.firstChild) {
         legend.removeChild(legend.firstChild);
     }
-    for(var i = 0; i < DRONES.length; i++){
+    for (var i = 0; i < DRONES.length; i++) {
         var div = document.createElement('div');
         var color = DRONES[i].fields.color;
         var name = DRONES[i].fields.name;
