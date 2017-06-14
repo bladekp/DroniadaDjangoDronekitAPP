@@ -2,3 +2,25 @@
     height: 100vh;
     width: 100vw;
 }
+
+#iw-text {
+    padding: 3px;
+    font-size: 16px;
+    cursor: text;
+}
+
+.coord {
+    margin: 1px;
+    cursor: pointer;
+}
+
+.coord:hover{
+    color: DarkBlue;
+    text-decoration: underline;
+}
+
+.coord:active{
+    margin: 0px;
+    border: 1px solid DodgerBlue
+
+}

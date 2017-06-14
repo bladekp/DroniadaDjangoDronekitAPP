@@ -223,6 +223,7 @@ function initMap() {
         mapTypeId: 'satellite'
     });
 
+
     /* north-west corner, clockwise direction */
     var areaCoords = [
         {lat: 50.0931667, lng: 20.1916000},
@@ -247,6 +248,42 @@ function initMap() {
         fillOpacity: 0.2
     });
 
+    var infoWindow = new google.maps.InfoWindow({
+        pixelOffset: new google.maps.Size(0,0)
+    });
+
+    function popup(event) {
+        var latitude = event.latLng.lat();
+        var longitude = event.latLng.lng();
+        console.log( latitude + ', ' + longitude );
+        var latLng = event.latLng;
+
+        infoWindowHtml ='<div id="iw-text">' +
+                            '<span id="lat" class="coord">' +
+                                latitude +
+                            '</span>' + ', ' +
+                            '<span id="lng" class="coord">' +
+                                longitude +
+                            '</span>' +
+                         '</div>';
+        console.log(infoWindowHtml);
+        infoWindow.setContent(infoWindowHtml);
+        infoWindow.setPosition(latLng) ;
+
+        infoWindow.open(map);
+        selectText('iw-text');
+        document.execCommand('copy');
+        clearSelection('iw-text');
+        $('#lat').click( { elementId: 'lat'}, copyElementText );
+        $('#lng').click( { elementId: 'lng'}, copyElementText );
+
+    }
+    //Add listener
+    google.maps.event.addListener(map, "click", popup); //end addListener
+
+    //Add listener
+    google.maps.event.addListener(area, "click", popup); //end addListener
+
     area.setMap(map);
 }
 
@@ -266,6 +303,7 @@ $(function () {
 
     startTime = d.getTime();
 });
+
 
 
 function buttonEvent() {
@@ -293,3 +331,26 @@ function clearMarkers() {
     }
 }
 
+function copyElementText(event){
+    selectText(event.data.elementId);
+    document.execCommand('copy');
+    clearSelection(event.data.elementId);
+}
+
+function selectText(element) {
+    var text = document.getElementById(element);
+    var selection = window.getSelection();
+    var range = document.createRange();
+    range.selectNodeContents(text);
+    selection.removeAllRanges();
+    selection.addRange(range);
+}
+
+function clearSelection(element) {
+    var text = document.getElementById(element);
+    var selection = window.getSelection();
+    var range = document.createRange();
+    range.selectNodeContents(text);
+    selection.removeAllRanges();
+    //selection.addRange(range);
+}
