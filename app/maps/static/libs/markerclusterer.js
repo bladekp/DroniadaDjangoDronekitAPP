@@ -29,7 +29,7 @@
 /**
  * A Marker Clusterer that clusters MARKERS.
  *
- * @param {google.maps.Map} map The Google map to attach to.
+ * @param {google.maps.Map} map The Google MAP to attach to.
  * @param {Array.<google.maps.Marker>=} opt_markers Optional MARKERS to add to
  *   the cluster.
  * @param {Object=} opt_options support the following options:
@@ -153,10 +153,10 @@ function MarkerClusterer(map, opt_markers, opt_options) {
    */
   this.prevZoom_ = this.map_.getZoom();
 
-  // Add the map event listeners
+  // Add the MAP event listeners
   var that = this;
   google.maps.event.addListener(this.map_, 'zoom_changed', function() {
-    // Determines map type and prevent illegal zoom levels
+    // Determines MAP type and prevent illegal zoom levels
     var zoom = that.map_.getZoom();
     var minZoom = that.map_.minZoom || 0;
     var maxZoom = Math.min(that.map_.maxZoom || 100,
@@ -250,7 +250,7 @@ MarkerClusterer.prototype.setupStyles_ = function() {
 };
 
 /**
- *  Fit the map to the bounds of the MARKERS in the clusterer.
+ *  Fit the MAP to the bounds of the MARKERS in the clusterer.
  */
 MarkerClusterer.prototype.fitMapToMarkers = function() {
   var markers = this.getMarkers();
@@ -547,9 +547,9 @@ MarkerClusterer.prototype.getTotalClusters = function() {
 
 
 /**
- * Returns the google map that the clusterer is associated with.
+ * Returns the google MAP that the clusterer is associated with.
  *
- * @return {google.maps.Map} The map.
+ * @return {google.maps.Map} The MAP.
  */
 MarkerClusterer.prototype.getMap = function() {
   return this.map_;
@@ -557,9 +557,9 @@ MarkerClusterer.prototype.getMap = function() {
 
 
 /**
- * Sets the google map that the clusterer is associated with.
+ * Sets the google MAP that the clusterer is associated with.
  *
- * @param {google.maps.Map} map The map.
+ * @param {google.maps.Map} map The MAP.
  */
 MarkerClusterer.prototype.setMap = function(map) {
   this.map_ = map;
@@ -780,8 +780,8 @@ MarkerClusterer.prototype.createClusters_ = function() {
     return;
   }
 
-  // Get our current map view bounds.
-  // Create a new bounds object so we don't affect the map.
+  // Get our current MAP view bounds.
+  // Create a new bounds object so we don't affect the MAP.
   var mapBounds = new google.maps.LatLngBounds(this.map_.getBounds().getSouthWest(),
       this.map_.getBounds().getNorthEast());
   var bounds = this.getExtendedBounds(mapBounds);
@@ -972,9 +972,9 @@ Cluster.prototype.isMarkerInClusterBounds = function(marker) {
 
 
 /**
- * Returns the map that the cluster is associated with.
+ * Returns the MAP that the cluster is associated with.
  *
- * @return {google.maps.Map} The map.
+ * @return {google.maps.Map} The MAP.
  */
 Cluster.prototype.getMap = function() {
   return this.map_;
@@ -1134,7 +1134,7 @@ ClusterIcon.prototype.show = function() {
 
 
 /**
- * Remove the icon from the map
+ * Remove the icon from the MAP
  */
 ClusterIcon.prototype.remove = function() {
   this.setMap(null);

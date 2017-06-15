@@ -5,7 +5,7 @@ var marker_icon_path = 'M 0, 0 m -' + m_rad + ', 0 a ' + m_rad + ',' + m_rad + '
 var DRONES = [];
 var MARKERS = [];
 var estimations = [];
-var map;
+var MAP;
 var beacon_filter = [];
 var MAX_NUMBER_OF_OCCURENCES = 20; //how many occurrences use to estimate position
 clearMarkers();
@@ -21,10 +21,10 @@ function updateDrones(drones) {
         if (!found) {
             drones[i].polylines = [];
             DRONES.push(drones[i]);
+            updateLegend(DRONES);
         }
         found = false;
     }
-    updateLegend(DRONES);
 }
 
 function addDronesPolyline(points) {
@@ -39,8 +39,6 @@ function addDronesPolyline(points) {
         };
         if (typeof lastPoint !== "undefined") {
             drone.polylines.push(addPolyline(lastPoint, drone.fields.last_position, drone.fields.color));
-        } else {
-            addPoint(latitude, longitude, drone.fields.color, "", drone.fields.name, 1); //add point if just one point (start point)
         }
     }
 }
@@ -90,7 +88,7 @@ function addMarkerToInternalCollection(marker, circle, beacon, major, minor) {
 function addPoint(latitude, longitude, color, label, title, scale) {
     return new google.maps.Marker({
         position: {lat: latitude, lng: longitude},
-        map: map,
+        map: MAP,
         icon: {
             path: marker_icon_path,
             fillColor: color,
@@ -112,7 +110,7 @@ function addPointCircle(latitude, longitude, radius, color) {
         strokeWeight: 1,
         fillColor: '#FFFFF',
         fillOpacity: 0.0,
-        map: map,
+        map: MAP,
         center: {lat: latitude, lng: longitude},
         radius: radius,
         clickable: false
@@ -135,7 +133,7 @@ function addPolyline(p1, p2, color) {
             p1,
             p2
         ],
-        map: map,
+        map: MAP,
         geodesic: true,
         strokeColor: color,
         strokeOpacity: 1.0,
@@ -145,7 +143,7 @@ function addPolyline(p1, p2, color) {
 
 function initMap() {
     var center_pos = WARSZTAT_POSITION;
-    map = new google.maps.Map(document.getElementById('map'), {
+    MAP = new google.maps.Map(document.getElementById('map'), {
         zoom: 16,
         center: center_pos,
         scrollwheel: true,
@@ -178,14 +176,14 @@ function initMap() {
         fillOpacity: 0.2
     });
 
-    google.maps.event.addListener(map, "click", popup);
+    google.maps.event.addListener(MAP, "click", popup);
     google.maps.event.addListener(area, "click", popup);
 
     var legend = document.getElementById('legend');
-    map.controls[google.maps.ControlPosition.RIGHT_BOTTOM].push(legend);
+    MAP.controls[google.maps.ControlPosition.RIGHT_BOTTOM].push(legend);
 
     var beacons = document.getElementById('beacons');
-    map.controls[google.maps.ControlPosition.RIGHT_BOTTOM].push(beacons);
+    MAP.controls[google.maps.ControlPosition.RIGHT_BOTTOM].push(beacons);
 
     for (var i = 0; i < BEACONS_COUNT; i++) {
         var div = document.createElement('div');
@@ -196,7 +194,7 @@ function initMap() {
         beacons.appendChild(div);
     }
 
-    area.setMap(map);
+    area.setMap(MAP);
 }
 
 function setMarkersMap(beaconIndex, map) {

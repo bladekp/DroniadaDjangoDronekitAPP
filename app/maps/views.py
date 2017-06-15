@@ -13,7 +13,7 @@ COLORS = ["#2875e1", "#FFA500", "#7d220c", "#ee82ee", "#9a8f93", "#d3f0d0"]
 COLORS_INDX = 0
 
 def render_map(request):
-    return render(request, 'maps/map.html')
+    return render(request, 'maps/MAP.html')
 
 
 def get_data(request):

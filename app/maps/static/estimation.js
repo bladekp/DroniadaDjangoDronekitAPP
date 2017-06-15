@@ -87,8 +87,8 @@ function estimatePosistion() {
         latpos = latpos/n;
         lngpos = lngpos/n;
         if (!(MARKERS[i].estimation === null)) {
-            MARKERS[i].estimation.marker.setMap(map);
-            MARKERS[i].estimation.marker.visible = (map !== null);
+            MARKERS[i].estimation.marker.setMap(MAP);
+            MARKERS[i].estimation.marker.visible = (MAP !== null);
         }
         estimation.result = {lat: latpos, lng: lngpos};
 

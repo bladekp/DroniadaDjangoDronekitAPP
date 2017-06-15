@@ -18,7 +18,7 @@ function popup(event) {
 
     infoWindow.setContent(infoWindowHtml);
     infoWindow.setPosition(latLng);
-    infoWindow.open(map);
+    infoWindow.open(MAP);
     selectText('iw-text');
     document.execCommand('copy');
     clearSelection('iw-text');
@@ -60,8 +60,8 @@ function checkboxChanged(event, major, minor) {
 function check(major, minor) {
     var indx = indexInMarkersCollection(major, minor);
     beacon_filter[indx] = false;
-    setMarkersMap(indx, map);
-    setCirclesMap(indx, map);
+    setMarkersMap(indx, MAP);
+    setCirclesMap(indx, MAP);
 }
 
 function uncheck(major, minor) {
@@ -97,6 +97,14 @@ function clearDronePolylines() {
     }
 }
 
-function legendCheckboxChanged(event, drone){
-    console.error("Not implemented yet.");
+function legendCheckboxChanged(event, drone_id){
+    var drone = findDrone(drone_id);
+    if (event.target.checked) {
+        var map = MAP;
+    } else {
+        var map = null;
+    }
+    for (var i = 0; i < drone.polylines.length; i++){
+        drone.polylines[i].setMap(map);
+    }
 }

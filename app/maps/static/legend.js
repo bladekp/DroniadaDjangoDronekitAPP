@@ -7,7 +7,7 @@ function updateLegend(drones) {
         var div = document.createElement('div');
         var color = drones[i].fields.color;
         var name = drones[i].fields.name;
-        div.innerHTML = '<span class="symbol" style="color: ' + color + '">&#9596;</span>  <span class="description">' + name + '</span><input class="custom-checkbox" style="float: right;" type="checkbox" checked="true" onchange="legendCheckboxChanged(event)"/>';
+        div.innerHTML = '<span class="symbol" style="color: ' + color + '">&#9596;</span>  <span class="description">' + name + '</span><input class="custom-checkbox" style="float: right;" type="checkbox" checked="true" onchange="legendCheckboxChanged(event,' + drones[i].pk + ')"/>';
         legend.appendChild(div);
     }
 }
