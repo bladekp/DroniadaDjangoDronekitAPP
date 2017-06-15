@@ -7,6 +7,7 @@ var estimations = [];
 var polylines = [];
 var map;
 var beacon_filter = [];
+var possiblePositions = [];
 clearMarkers();
 
 
@@ -101,92 +102,111 @@ function addBeaconPoints(beacons) {
         var title = Math.round(altitude * 100) / 100 + " m";
 
         //check how many better results already exists
-        var occs = resultsCount(major,minor,rssi);
+        var occs = resultsCount(major, minor, rssi);
 
 
         //delete result if there is already too many of them
         if (occs.occFound >= NUMBEROFOCCURENCES) {
             var indexToDelete = rssiMax(major, minor);
-            setMarkerMap(indexInMarkersCollection(major, minor), indexToDelete, null);
-            setCircleMap(indexInMarkersCollection(major, minor), indexToDelete, null);
-            markers[indexInMarkersCollection(major, minor)].splice(indexToDelete, 1);
+            deleteResult(indexInMarkersCollection(major, minor), indexToDelete)
         }
 
         //add new better result
         if (occs.betterOcc < NUMBEROFOCCURENCES) {
-            var marker = addPoint(latitude, longitude, color, label, title, 3.0);
-            var circle = addPointCircle(latitude, longitude, getApproxDistance(rssi), color);
-            var beacon = addFoundBeacon(latitude, longitude, major, minor, rssi, altitude);
-            addMarkerToInternalCollection(marker, circle, beacon, beacons[i].fields.major, beacons[i].fields.minor);
+            addResult(major, minor, latitude, longitude, color, label, title, rssi, altitude);
         }
 
 
     }
 }
 
+function deleteResult(i, j) {
+    setMarkerMap(i, j, null);
+    setCircleMap(i, j, null);
+    markers[i].splice(j, 1);
+}
+
+function addResult(major, minor, latitude, longitude, color, label, title, rssi, altitude) {
+    var marker = addPoint(latitude, longitude, color, label, title, 3.0);
+    var circle = addPointCircle(latitude, longitude, getApproxDistance(rssi), color);
+    var beacon = addFoundBeacon(latitude, longitude, major, minor, rssi, altitude);
+    addMarkerToInternalCollection(marker, circle, beacon, major, minor);
+}
+
 function estimatePosistion() {
-    var bicons = [];
-    var array = [];
     var i;
     var j;
     var k;
-    //populate bicons
-    for (i = 0; i < majors.length; i++) {
-        for (j = 0; j < minors.length; j++) {
-            array = [];
-            for (k = 0; k < foundBeacons.length; k++) {
-                if (foundBeacons[k].colors.major === majors[i] && foundBeacons[k].colors.minor === minors[j]) {
-                    array.push(foundBeacons[k]);
+
+    for (i = 0; i < markers.length; i++) {
+        for (j = 0; j < markers[i].length; j++) {
+            for (k = j + 1; k < markers[i].length; k++) {
+                var m1 = markers[i][j];
+                var m2 = markers[i][k];
+
+                var c1 = new google.maps.LatLng(m1.beacon.position);
+                var c2 = new google.maps.LatLng(m2.beacon.position);
+
+                var d = google.maps.geometry.spherical.computeDistanceBetween(c1, c2);
+
+                var r1 = getApproxDistance(m1.beacon.rssi);
+                var r2 = getApproxDistance(m2.beacon.rssi);
+
+
+                if (!((d > (r1 + r2)) || (d < Math.abs(r1 - r2)))) {
+
+                    var p1 = google.maps.geometry.spherical.computeOffset(c1, r1, 0);
+                    var p2 = google.maps.geometry.spherical.computeOffset(c2, r2, 0);
+                    var mid = new google.maps.LatLng({lat: (c1.lat() + c2.lat()) / 2, lng: (c1.lng() + c2.lng()) / 2});
+
+                    var cx1 = c1.lng() - mid.lng();
+                    var cx2 = c2.lng() - mid.lng();
+
+
+                    var cy1 = Math.log(Math.tan(c1.lat()) + (1 / Math.cos(c1.lat())));
+                    var cy2 = Math.log(Math.tan(c2.lat()) + (1 / Math.cos(c2.lat())));
+                    var py1 = Math.log(Math.tan(p1.lat()) + (1 / Math.cos(p1.lat())));
+                    var py2 = Math.log(Math.tan(p2.lat()) + (1 / Math.cos(p2.lat())));
+
+                    var tr1 = py1 - cy1;
+                    var tr2 = py2 - cy2;
+
+
+                    var a = (tr1 * tr1 - tr2 * tr2 + d * d) / (2 * d);
+
+                    var h = Math.sqrt(tr1 * tr1 - a * a);
+
+
+                    var mx = cx1 + a * (cx2 - cx1) / d;
+                    var my = cy1 + a * (cy2 - cy1) / d;
+
+                    var prediction1x = mx + h * (cy2 - cy1) / d;
+                    var prediction1y = my + h * (cx2 - cx1) / d;
+                    var prediction2x = mx - h * (cy2 - cy1) / d;
+                    var prediction2y = my - h * (cx2 - cx1) / d;
+
+
+                    var tprediction1x = prediction1x + mid.lng();
+                    var tprediction1y = Math.atan(Math.sinh(prediction1y));
+                    var tprediction2x = prediction2x + mid.lng();
+                    var tprediction2y = Math.atan(Math.sinh(prediction2y));
+
+                    var prediction1 = {lng: tprediction1x, lat: tprediction1y};
+                    var prediction2 = {lng: tprediction2x, lat: tprediction2y};
+
+
+                    possiblePositions.push(prediction1);
+                    possiblePositions.push(prediction2);
+
                 }
-            }
-            if (array.length > 0) {
-                bicons.push(array);
             }
         }
     }
-    console.log(bicons[0]);
-    //delete overlaping bicons d < |r0 - r1|
-    for (i = 0; i < bicons.length; i++) {
 
-        for (j = 0; j < bicons[i].length; j++) {
-            for (k = 0; k < bicons[i].length; k++) {
-                if (k !== j) {
-                    var p1 = new google.maps.LatLng({lat: bicons[i][j].position.lat, lng: bicons[i][j].position.lng});
-                    var p2 = new google.maps.LatLng({lat: bicons[i][k].position.lat, lng: bicons[i][k].position.lng});
-                    var d = google.maps.geometry.spherical.computeDistanceBetween(p1, p2);
+    for (i = 0; i < possiblePositions.length; i++) {
+        var curItem = possiblePositions[i];
 
-                    console.log(d);
-
-                    var r0 = getApproxDistance(bicons[i][j].rssi);
-                    var r1 = getApproxDistance(bicons[i][k].rssi);
-
-                    if (d < Math.abs(r0 - r1)) {
-                        if (r0 > r1) {
-                            bicons[i].splice(j, 1);
-                        } else {
-                            bicons[i].splice(k, 1);
-                        }
-                    }
-                }
-
-            }
-        }
-
-
-    }
-
-    var potentialPositions = [];
-
-    //compute potentialPositions
-
-    for (i = 0; i < bicons.length; i++) {
-        for (j = 0; j < bicons[i].length; j++) {
-            for (k = 0; k < bicons[i].length; k++) {
-                if (j !== k) {
-
-                }
-            }
-        }
+        addPoint(curItem.lat, curItem.lng, "blue", "", "", 1.0);
     }
 
 }
@@ -206,7 +226,7 @@ function resultsCount(major, minor, rssi) {
         }
     }
 
-    return {occFound:occFound,betterOcc:betterOcc}
+    return {occFound: occFound, betterOcc: betterOcc}
 }
 
 var rad = function (x) {
@@ -313,7 +333,7 @@ function addPolyline(p1, p2, color) {
 }
 
 function initMap() {
-    var center_pos = {lat: 50.089684, lng: 20.202649};
+    var center_pos = {lat: 51.84122169789504, lng: 20.34555584192276};
     map = new google.maps.Map(document.getElementById('map'), {
         zoom: 16,
         center: center_pos,
@@ -424,12 +444,12 @@ function uncheck(major, minor) {
 }
 
 $(function () {
-    var d = new Date();
-    var month = d.getMonth();
-    var day = d.getDate();
-    var year = d.getFullYear();
-    var hour = d.getHours();
-    var minute = d.getMinutes();
+    var d = new Date(2017, 5, 13, 14, 20);
+    // var month = d.getMonth();
+    // var day = d.getDate();
+    // var year = d.getFullYear();
+    // var hour = d.getHours();
+    // var minute = d.getMinutes();
 
     $('#datetimepicker1')
         .datetimepicker({
