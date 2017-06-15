@@ -151,6 +151,9 @@ function initMap() {
         mapTypeId: 'satellite'
     });
 
+    infoWindow = new google.maps.InfoWindow({
+        pixelOffset: new google.maps.Size(0, 0)
+    });
 
     /* north-west corner, clockwise direction */
     var areaCoords = [

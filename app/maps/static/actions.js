@@ -12,10 +12,6 @@ function popup(event) {
         '</span>' +
         '</div>';
 
-    var infoWindow = new google.maps.InfoWindow({
-        pixelOffset: new google.maps.Size(0, 0)
-    });
-
     infoWindow.setContent(infoWindowHtml);
     infoWindow.setPosition(latLng);
     infoWindow.open(MAP);
@@ -75,13 +71,13 @@ function uncheck(major, minor) {
 
 function buttonEvent() {
 
-    for (var i = 0; i < MARKERS.length; i++) {
-        setMarkersMap(i, null);
-        setCirclesMap(i, null);
-    }
-    clearMarkers();
-    clearDronePolylines();
-    deleteEstimation(i);
+    MARKERS.length = 0;
+//    for (var i = 0; i < MARKERS.length; i++) {
+//        setMarkersMap(i, null);
+//        setCirclesMap(i, null);
+//    }
+//    clearMarkers();
+//    clearDronePolylines();
 
     var date = $("#datetimepicker1").find("input").val();
     var parts = date.split(".");

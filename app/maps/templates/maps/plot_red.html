@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html>
+<head>
+    {% load static %}
+    <title>Droniada 2017</title>
+
+    <link rel="shortcut icon" href="{% static 'favicon.ico' %}">
+
+    <link href="{% static 'libs/bootstrap.min.css' %}" rel="stylesheet"/>
+    <link href="{% static 'libs/bootstrap-datetimepicker.min.css' %}" rel="stylesheet"/>
+    <link rel="stylesheet" type="text/css" href="{% static 'map.css' %}">
+
+    <script src="{% static 'libs/jquery.min.js' %}"></script>
+    <script src="{% static 'libs/moment.min.js' %}"></script>
+    <script src="{% static 'libs/bootstrap.min.js' %}"></script>
+    <script src="{% static 'libs/bootstrap-datetimepicker.min.js' %}"></script>
+    <script src="{% static 'libs/markerclusterer.js' %}"></script>
+    <script src="{% static 'utils.js' %}"></script>
+    <script src="{% static 'actions.js' %}"></script>
+    <script src="{% static 'legend.js' %}"></script>
+    <script src="{% static 'ajax.js' %}"></script>
+    <script src="{% static 'estimation.js' %}"></script>
+    <script src="{% static 'map.js' %}"></script>
+</head>
+<body>
+<div class="container">
+    <div class="row">
+        <div class='col-sm-6'>
+            <div class="form-group">
+                <span class="starttime"> Czas startu: </span>
+                <div class='input-group date' id='datetimepicker1'>
+                    <input type='text' class="form-control"/>
+                    <span class="input-group-addon">
+                              <span class="glyphicon glyphicon-calendar"></span>
+                          </span>
+                </div>
+                <div class="acceptbutton">
+                    <button type="button" id="accept" onclick="buttonEvent();"
+                            class="btn btn-info glyphicon glyphicon-ok"></button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<div id="map"></div>
+<div id="beacons"></div>
+<div id="legend"></div>
+
+<script async defer src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBpqpo1bn0gtT0TyjhlgKB_IrfX3NEjN8Y&callback=initMap"></script>
+
+</body>
+</html>
