@@ -28,7 +28,7 @@ def get_data(request):
             '{' +
                 '"drones_positions":' + dronepositionsjson + ','
                 '"beacons_positions":' + beaconpositions + ','
-                '"drones":' + drones +','
+                '"drones":' + drones + ','
                 '"current_time":' + str(UtilClass.milis_after_epoch()) +
             '}'
             , content_type="application/json")
