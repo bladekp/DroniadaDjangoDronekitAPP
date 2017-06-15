@@ -12,6 +12,10 @@ function popup(event) {
         '</span>' +
         '</div>';
 
+    var infoWindow = new google.maps.InfoWindow({
+        pixelOffset: new google.maps.Size(0, 0)
+    });
+
     infoWindow.setContent(infoWindowHtml);
     infoWindow.setPosition(latLng);
     infoWindow.open(map);

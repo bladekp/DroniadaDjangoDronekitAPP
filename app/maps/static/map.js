@@ -1,3 +1,4 @@
+var WARSZTAT_POSITION = {lat: 51.84122169789504, lng: 20.34555584192276}; //
 var BEACONS_COUNT = 10;
 var m_rad = 5;
 var marker_icon_path = 'M 0, 0 m -' + m_rad + ', 0 a ' + m_rad + ',' + m_rad + ' 0 1,0 ' + 2 * m_rad + ',0 a ' + m_rad + ',' + m_rad + ' 0 1,0 -' + 2 * m_rad + ',0';
@@ -143,7 +144,7 @@ function addPolyline(p1, p2, color) {
 }
 
 function initMap() {
-    var center_pos = {lat: 51.84122169789504, lng: 20.34555584192276};
+    var center_pos = WARSZTAT_POSITION;
     map = new google.maps.Map(document.getElementById('map'), {
         zoom: 16,
         center: center_pos,
@@ -175,10 +176,6 @@ function initMap() {
         strokeWeight: 5,
         fillColor: 'green',
         fillOpacity: 0.2
-    });
-
-    var infoWindow = new google.maps.InfoWindow({
-        pixelOffset: new google.maps.Size(0, 0)
     });
 
     google.maps.event.addListener(map, "click", popup);
