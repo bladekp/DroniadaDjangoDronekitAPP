@@ -71,7 +71,7 @@ function addBeaconPoints(beacons) {
         }
     }
 
-    if (beacon_measurements_modified) estimatePosistion();
+    if (beacon_measurements_modified) estimateBeaconPosition();
 }
 
 function addResult(major, minor, latitude, longitude, color, label, title, rssi, altitude) {
@@ -221,7 +221,7 @@ function setCircleMap(beaconIndex, measureIndex, map) {
 function clearMarkers() {
     var beacons = document.getElementById('beacons');
     for (var i = 0; i < BEACONS_COUNT; i++) {
-        MARKERS[i] = {estimation: null, measurements: []};
+        MARKERS[i] = {estimation: { possiblePositions : [], possiblePositionsMarkers : [], marker : null, result : null}, measurements: []};
         beacon_filter[i] = false;
         if (beacons !== null) beacons.childNodes[i].childNodes[3].checked = true;
     }

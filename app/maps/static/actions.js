@@ -62,6 +62,7 @@ function check(major, minor) {
     beacon_filter[indx] = false;
     setMarkersMap(indx, MAP);
     setCirclesMap(indx, MAP);
+    drawEstimation(indx);
 }
 
 function uncheck(major, minor) {
@@ -69,7 +70,7 @@ function uncheck(major, minor) {
     beacon_filter[indx] = true;
     setMarkersMap(indx, null);
     setCirclesMap(indx, null);
-
+    hideEstimation(indx);
 }
 
 function buttonEvent() {
