@@ -70,17 +70,19 @@ function uncheck(major, minor) {
     beacon_filter[indx] = true;
     setMarkersMap(indx, null);
     setCirclesMap(indx, null);
-    hideEstimation(indx);
+    hideEstimation(indx, true, false); // parameters: indx, hidePossiblePositions, hideEstimated
 }
 
 function buttonEvent() {
+
     for (var i = 0; i < MARKERS.length; i++) {
         setMarkersMap(i, null);
         setCirclesMap(i, null);
     }
     clearMarkers();
     clearDronePolylines();
-    estimations = [];
+    deleteEstimation(i);
+
     var date = $("#datetimepicker1").find("input").val();
     var parts = date.split(".");
     var tail = parts[2].split(" ");

@@ -46,7 +46,7 @@ function addDronesPolyline(points) {
 function addBeaconPoints(beacons) {
     var beacon_measurements_modified = false;
 
-    for (var i = 0; i < beacons.length; i++) {
+    for (var i = 0; i < beacons.length/10; i++) {
         var latitude = beacons[i].fields.latitude;
         var longitude = beacons[i].fields.longitude;
         var altitude = beacons[i].fields.altitude;
@@ -94,7 +94,7 @@ function addPoint(latitude, longitude, color, label, title, scale) {
             fillColor: color,
             fillOpacity: 1.0,
             strokeOpacity: 0.0,
-            scale: scale
+            scale: scale,
         },
         label: label,
         title: title,
@@ -207,7 +207,6 @@ function setMarkerMap(beaconIndex, measureIndex, map) {
     MARKERS[beaconIndex].measurements[measureIndex].marker.setMap(map);
     MARKERS[beaconIndex].measurements[measureIndex].marker.visible = (map !== null);
 }
-
 function setCirclesMap(beaconIndex, map) {
     for (var j = 0; j < MARKERS[beaconIndex].measurements.length; j++) {
         setCircleMap(beaconIndex, j, map);

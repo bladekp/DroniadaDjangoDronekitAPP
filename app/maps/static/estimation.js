@@ -41,22 +41,34 @@ function estimateBeaconPosition() {
 }
 
 function drawEstimation(beaconIndex) {
+
     var possiblePositions = MARKERS[beaconIndex].estimation.possiblePositions;
     for (var i = 0; i < possiblePositions.length; i++) {
         MARKERS[beaconIndex].estimation.possiblePositionsMarkers.push(addPoint(possiblePositions[i].lat(), possiblePositions[i].lng(), "blue", "", "", 1.0));
     }
     if (MARKERS[beaconIndex].estimation.result !== null) {
-        MARKERS[beaconIndex].estimation.marker = addPoint(MARKERS[beaconIndex].estimation.result.lat, MARKERS[beaconIndex].estimation.result.lng, "orange", "", "", 2.0);
+
+        if(MARKERS[beaconIndex].measurements.length > 0){
+            var minor = MARKERS[beaconIndex].measurements[0].beacon.colors.minor;
+            var major = MARKERS[beaconIndex].measurements[0].beacon.colors.major;
+            var label = major + '.' + minor;
+        } else {
+            var label = "";
+        }
+
+        MARKERS[beaconIndex].estimation.marker = addPoint(MARKERS[beaconIndex].estimation.result.lat, MARKERS[beaconIndex].estimation.result.lng, "orange", label, label, 2.0);
     }
 }
 
-function hideEstimation(beaconIndex) {
+function hideEstimation(beaconIndex, hidePossiblePositions = true, hideEstimated = true) {
     var possiblePositionsMarkers = MARKERS[beaconIndex].estimation.possiblePositionsMarkers;
     for (var i = 0; i < possiblePositionsMarkers.length; i++) {
-        possiblePositionsMarkers[i].setMap(null);
-        possiblePositionsMarkers[i].visible = true;
+        if(hidePossiblePositions){
+            possiblePositionsMarkers[i].setMap(null);
+            possiblePositionsMarkers[i].visible = true;
+        }
     }
-    if (MARKERS[beaconIndex].estimation.marker !== null) {
+    if (MARKERS[beaconIndex].estimation.marker !== null && hideEstimated) {
         MARKERS[beaconIndex].estimation.marker.setMap(null);
         MARKERS[beaconIndex].estimation.marker.visible = false;
     }
