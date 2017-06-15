@@ -1,7 +1,7 @@
 var REFRESH_INTERVAL_MS = 600;
-var ENDPOINT_URL = "http://localhost:8000/map/getData";
+var ENDPOINT_URL = "http://remote.jgwservices.com:8000/map/getData"; //"http://localhost:8000/map/getData"; "http://remote.jgwservices.com:8000/map/getData";
 var START_TIME = 0;
-var START_DATE = new Date(2017, 5, 13, 14, 20); //new Date();
+var START_DATE = new Date(); //new Date(); new Date(2017, 5, 13, 14, 20);
 
 setInterval(
     function getPoint() {

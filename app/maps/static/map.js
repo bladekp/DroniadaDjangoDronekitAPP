@@ -1,4 +1,4 @@
-var WARSZTAT_POSITION = {lat: 51.84122169789504, lng: 20.34555584192276}; //
+var WARSZTAT_POSITION = {lat: 50.09085137159468, lng: 20.200510025024414}; // {lat: 50.09085137159468, lng: 20.200510025024414}=WARSZTAT {lat: 51.84122169789504, lng: 20.34555584192276};=BABSK
 var BEACONS_COUNT = 10;
 var m_rad = 5;
 var marker_icon_path = 'M 0, 0 m -' + m_rad + ', 0 a ' + m_rad + ',' + m_rad + ' 0 1,0 ' + 2 * m_rad + ',0 a ' + m_rad + ',' + m_rad + ' 0 1,0 -' + 2 * m_rad + ',0';
