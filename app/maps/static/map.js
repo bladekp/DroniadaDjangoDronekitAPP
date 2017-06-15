@@ -7,7 +7,6 @@ var estimations = [];
 var polylines = [];
 var map;
 var beacon_filter = [];
-var possiblePositions = [];
 clearMarkers();
 
 
@@ -34,9 +33,7 @@ function errorHandler(response, options, error) {
 function parseSuccess(response) {
     startTime = response.current_time;
     updateDrones(response.drones);
-    // addDronesPolyline(response.drones_positions);
     addBeaconPoints(response.beacons_positions);
-    // estimatePosistion();
 }
 
 
@@ -104,26 +101,30 @@ function addBeaconPoints(beacons) {
         //check how many better results already exists
         var occs = resultsCount(major, minor, rssi);
 
-
+        var modified = false;
         //delete result if there is already too many of them
         if (occs.occFound >= NUMBEROFOCCURENCES) {
+            modified = true;
             var indexToDelete = rssiMax(major, minor);
             deleteResult(indexInMarkersCollection(major, minor), indexToDelete)
         }
 
         //add new better result
         if (occs.betterOcc < NUMBEROFOCCURENCES) {
+            modified = true;
+
             addResult(major, minor, latitude, longitude, color, label, title, rssi, altitude);
         }
-
-
+        if (modified) {
+            // estimatePosistion();
+        }
     }
 }
 
 function deleteResult(i, j) {
     setMarkerMap(i, j, null);
     setCircleMap(i, j, null);
-    markers[i].splice(j, 1);
+    markers[i].measurements.splice(j, 1);
 }
 
 function addResult(major, minor, latitude, longitude, color, label, title, rssi, altitude) {
@@ -139,10 +140,11 @@ function estimatePosistion() {
     var k;
 
     for (i = 0; i < markers.length; i++) {
-        for (j = 0; j < markers[i].length; j++) {
-            for (k = j + 1; k < markers[i].length; k++) {
-                var m1 = markers[i][j];
-                var m2 = markers[i][k];
+        var estimation = {possiblePositions: [], result: {}, marker: {}};
+        for (j = 0; j < markers[i].measurements.length; j++) {
+            for (k = j + 1; k < markers[i].measurements.length; k++) {
+                var m1 = markers[i].measurements[j];
+                var m2 = markers[i].measurements[k];
 
                 var c1 = new google.maps.LatLng(m1.beacon.position);
                 var c2 = new google.maps.LatLng(m2.beacon.position);
@@ -154,61 +156,62 @@ function estimatePosistion() {
 
 
                 if (!((d > (r1 + r2)) || (d < Math.abs(r1 - r2)))) {
+                    var x = (d * d - r1 * r1 + r2 * r2) / (2 * d);
 
-                    var p1 = google.maps.geometry.spherical.computeOffset(c1, r1, 0);
-                    var p2 = google.maps.geometry.spherical.computeOffset(c2, r2, 0);
-                    var mid = new google.maps.LatLng({lat: (c1.lat() + c2.lat()) / 2, lng: (c1.lng() + c2.lng()) / 2});
+                    var h = Math.sqrt(r2 * r2 - x * x);
 
-                    var cx1 = c1.lng() - mid.lng();
-                    var cx2 = c2.lng() - mid.lng();
+                    var heading = google.maps.geometry.spherical.computeHeading(c2, c1);
 
+                    var m = google.maps.geometry.spherical.computeOffset(c2, x, heading);
 
-                    var cy1 = Math.log(Math.tan(c1.lat()) + (1 / Math.cos(c1.lat())));
-                    var cy2 = Math.log(Math.tan(c2.lat()) + (1 / Math.cos(c2.lat())));
-                    var py1 = Math.log(Math.tan(p1.lat()) + (1 / Math.cos(p1.lat())));
-                    var py2 = Math.log(Math.tan(p2.lat()) + (1 / Math.cos(p2.lat())));
+                    var p1 = google.maps.geometry.spherical.computeOffset(m, h, heading - 90);
+                    var p2 = google.maps.geometry.spherical.computeOffset(m, h, heading + 90);
 
-                    var tr1 = py1 - cy1;
-                    var tr2 = py2 - cy2;
+                    var p1dist = 0;
+                    var p2dist = 0;
 
+                    var n;
 
-                    var a = (tr1 * tr1 - tr2 * tr2 + d * d) / (2 * d);
+                    for (n = 0; n < markers[i].measurements.length; n++) {
+                        var temp = new google.maps.LatLng(markers[i].measurements[n].beacon.position);
 
-                    var h = Math.sqrt(tr1 * tr1 - a * a);
+                        p1dist += google.maps.geometry.spherical.computeDistanceBetween(p1, temp);
+                        p2dist += google.maps.geometry.spherical.computeDistanceBetween(p2, temp);
+                    }
 
-
-                    var mx = cx1 + a * (cx2 - cx1) / d;
-                    var my = cy1 + a * (cy2 - cy1) / d;
-
-                    var prediction1x = mx + h * (cy2 - cy1) / d;
-                    var prediction1y = my + h * (cx2 - cx1) / d;
-                    var prediction2x = mx - h * (cy2 - cy1) / d;
-                    var prediction2y = my - h * (cx2 - cx1) / d;
-
-
-                    var tprediction1x = prediction1x + mid.lng();
-                    var tprediction1y = Math.atan(Math.sinh(prediction1y));
-                    var tprediction2x = prediction2x + mid.lng();
-                    var tprediction2y = Math.atan(Math.sinh(prediction2y));
-
-                    var prediction1 = {lng: tprediction1x, lat: tprediction1y};
-                    var prediction2 = {lng: tprediction2x, lat: tprediction2y};
-
-
-                    possiblePositions.push(prediction1);
-                    possiblePositions.push(prediction2);
-
+                    if (p1dist > p2dist) {
+                        estimation.possiblePositions.push(p2);
+                    } else {
+                        estimation.possiblePositions.push(p1);
+                    }
                 }
             }
         }
+        var latpos = 0;
+        var lngpos = 0;
+        var n;
+        for (n = 0; n < estimation.possiblePositions.length; n++) {
+            // console.log(estimation.possiblePositions[n].lat());
+            latpos += estimation.possiblePositions[n].lat();
+            lngpos += estimation.possiblePositions[n].lng();
+            addPoint(estimation.possiblePositions[n].lat(), estimation.possiblePositions[n].lng(), "blue", "", "", 1.0);
+        }
+        latpos = latpos/n;
+        lngpos = lngpos/n;
+        if (!(markers[i].estimation === null)) {
+            markers[i].estimation.marker.setMap(map);
+            markers[i].estimation.marker.visible = (map !== null);
+        }
+        estimation.result = {lat: latpos, lng: lngpos};
+
+        estimation.marker = addPoint(latpos, lngpos, "orange", "", "", 2.0);
+        markers[i].estimation = estimation;
     }
+}
 
-    for (i = 0; i < possiblePositions.length; i++) {
-        var curItem = possiblePositions[i];
-
-        addPoint(curItem.lat, curItem.lng, "blue", "", "", 1.0);
-    }
-
+function vectorLength(r) {
+    var c = new google.maps.LatLng({lat: 0, lng: 0});
+    return google.maps.geometry.spherical.computeOffset(new google.maps.LatLng({lat: 0, lng: 0}), r, 0).lat() - c.lat();
 }
 
 function resultsCount(major, minor, rssi) {
@@ -216,10 +219,10 @@ function resultsCount(major, minor, rssi) {
     var betterOcc = 0;
 
     for (var j = 0; j < markers.length; j++) {
-        for (var k = 0; k < markers[j].length; k++) {
-            if (markers[j][k].beacon.colors.major === major && markers[j][k].beacon.colors.minor === minor) {
+        for (var k = 0; k < markers[j].measurements.length; k++) {
+            if (markers[j].measurements[k].beacon.colors.major === major && markers[j].measurements[k].beacon.colors.minor === minor) {
                 occFound++;
-                if (markers[j][k].beacon.rssi < rssi) {
+                if (markers[j].measurements[k].beacon.rssi < rssi) {
                     betterOcc++;
                 }
             }
@@ -248,9 +251,9 @@ var getDistance = function (p1, p2) {
 function rssiMax(major, minor) {
     var max = -Infinity;
     var index;
-    for (var i = 0; i < markers[indexInMarkersCollection(major, minor)].length; i++) {
-        if (markers[indexInMarkersCollection(major, minor)][i].beacon.rssi > max) {
-            max = markers[indexInMarkersCollection(major, minor)][i].beacon.rssi;
+    for (var i = 0; i < markers[indexInMarkersCollection(major, minor)].measurements.length; i++) {
+        if (markers[indexInMarkersCollection(major, minor)].measurements[i].beacon.rssi > max) {
+            max = markers[indexInMarkersCollection(major, minor)].measurements[i].beacon.rssi;
             index = i;
         }
     }
@@ -258,7 +261,7 @@ function rssiMax(major, minor) {
 }
 
 function addMarkerToInternalCollection(marker, circle, beacon, major, minor) {
-    markers[indexInMarkersCollection(major, minor)].push({marker: marker, circle: circle, beacon: beacon});
+    markers[indexInMarkersCollection(major, minor)].measurements.push({marker: marker, circle: circle, beacon: beacon});
 }
 
 function indexInMarkersCollection(major, minor) {
@@ -513,14 +516,14 @@ function getApproxDistance(rssi) {
 }
 
 function setMarkersMap(i, map) {
-    for (var j = 0; j < markers[i].length; j++) {
+    for (var j = 0; j < markers[i].measurements.length; j++) {
         setMarkerMap(i, j, map);
     }
 }
 
 function setMarkerMap(i, j, map) {
-    markers[i][j].marker.setMap(map);
-    markers[i][j].marker.visible = (map !== null);
+    markers[i].measurements[j].marker.setMap(map);
+    markers[i].measurements[j].marker.visible = (map !== null);
 }
 
 function setCirclesMap(i, map) {
@@ -530,14 +533,14 @@ function setCirclesMap(i, map) {
 }
 
 function setCircleMap(i, j, map) {
-    markers[i][j].circle.setMap(map);
+    markers[i].measurements[j].circle.setMap(map);
     // markers[i][j].circle.visible = (map !== null);
 }
 
 function clearMarkers() {
     var beacons = document.getElementById('beacons');
     for (var i = 0; i < 10; i++) {
-        markers[i] = [];
+        markers[i] = {estimation: null, measurements: []};
         beacon_filter[i] = false;
         if (beacons !== null) beacons.childNodes[i].childNodes[3].checked = true;
     }
