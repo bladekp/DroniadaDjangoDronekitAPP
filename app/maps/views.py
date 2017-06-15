@@ -47,7 +47,7 @@ def save_drone_data(request):
             drone.save()
             global COLORS_INDX
             COLORS_INDX += 1
-        dp = DronePosition(latitude=float(lat), longitude=float(lon), altitude=float(alt), time=UtilClass.milis_after_epoch(), drone=drone)
+        dp = DronePosition(latitude=float(lat), longitude=float(lon), altitude=float(alt), time=time, drone=drone)
         dp.save()
     return HttpResponse('{"status":200}', content_type="application/json")
 
@@ -68,7 +68,7 @@ def save_beacon_data(request):
             drone.save()
             global COLORS_INDX
             COLORS_INDX += 1
-        b = Beacon(latitude=float(lat), longitude=float(lon), altitude=float(alt), rssi=rssi, major=major, minor=minor, time=UtilClass.milis_after_epoch(), drone=drone)
+        b = Beacon(latitude=float(lat), longitude=float(lon), altitude=float(alt), rssi=rssi, major=major, minor=minor, time=time, drone=drone)
         b.save()
     return HttpResponse('{"status":200}', content_type="application/json")
 
